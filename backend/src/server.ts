@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import authRoutes from './routes/auth.ts';
+import boardRoutes from './routes/board.ts';
 
 dotenv.config();
 const app = express();
@@ -16,6 +17,7 @@ app.use(
 );
 app.use(express.json());
 app.use('/api/auth', authRoutes);
+app.use('/api/boards', boardRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({
