@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.ts';
+import { authenticateToken, AuthRequest } from '../middleware/auth.ts';
 
 const router = express.Router();
 
@@ -61,5 +62,26 @@ router.post('/login', async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+
+router.get(
+    '/me',
+    authenticateToken,
+    async (req: AuthRequest, res: Response) => {
+        try {
+            const user = await User.findById(req.user?.userId).select(
+                '-password'
+            );
+            if (!user) {
+                res.status(404).json({ message: 'User not found' });
+                return;
+            }
+            res.json({
+                user: { id: user._id, email: user.email, name: user.name },
+            });
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
 
 export default router;
