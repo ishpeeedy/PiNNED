@@ -10,6 +10,8 @@ export interface IBoard extends Document {
         tileColor?: string;
         canvasColor?: string;
     };
+    visibility: 'private' | 'public';
+    allowDuplication: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -29,6 +31,15 @@ const boardSchema = new Schema<IBoard>(
                 type: String,
                 default: 'oklch(100% 0 0)',
             },
+        },
+        visibility: {
+            type: String,
+            enum: ['private', 'public'],
+            default: 'private',
+        },
+        allowDuplication: {
+            type: Boolean,
+            default: false,
         },
     },
     { timestamps: true }
