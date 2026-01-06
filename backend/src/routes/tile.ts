@@ -8,14 +8,14 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // GET /api/boards/:boardId/tiles - Get all tiles for a board
-router.get('/boards/:boardid/tiles', async (req: Request, res: Response) => {
+router.get('/boards/:boardId/tiles', async (req: Request, res: Response) => {
     try {
         const { boardId } = req.params;
         const board = await Board.findById(boardId);
-        if (!boardId) {
+        if (!board) {
             return res.status(404).json({ message: 'Board not found' });
         }
-        if (board?.userId.toString() !== req.user?.userId) {
+        if (board.userId.toString() !== req.user?.userId) {
             return res.status(403).json({ message: 'Access denied' });
         }
         const tiles = await Tile.find({ boardId });
@@ -26,25 +26,28 @@ router.get('/boards/:boardid/tiles', async (req: Request, res: Response) => {
 });
 
 // GET /api/boards/:boardId/tiles/:id - Get single tile
-router.get('/board/:boardId/tiles/:id', async (req: Request, res: Response) => {
-    try {
-        const { boardId, id } = req.params;
-        const board = await Board.findById(boardId);
-        if (!board) {
-            return res.status(404).json({ message: 'Board not found' });
+router.get(
+    '/boards/:boardId/tiles/:id',
+    async (req: Request, res: Response) => {
+        try {
+            const { boardId, id } = req.params;
+            const board = await Board.findById(boardId);
+            if (!board) {
+                return res.status(404).json({ message: 'Board not found' });
+            }
+            if (board.userId.toString() != req.user?.userId) {
+                return res.status(403).json({ message: 'Access denied' });
+            }
+            const tile = await Tile.findOne({ _id: id, boardId });
+            if (!tile) {
+                return res.status(404).json({ message: 'Tile not found' });
+            }
+            return res.json(tile);
+        } catch (error) {
+            return res.status(500).json({ message: 'Server error' });
         }
-        if (board.userId.toString() != req.user?.userId) {
-            return res.status(403).json({ message: 'Access denied' });
-        }
-        const tile = await Tile.findOne({ _id: id, boardId });
-        if (!tile) {
-            return res.status(404).json({ message: 'Tile not found' });
-        }
-        return res.json(tile);
-    } catch (error) {
-        return res.status(500).json({ message: 'Server error' });
     }
-});
+);
 
 // POST /api/boards/:boardId/tiles - Create new tile
 router.post('/boards/:boardId/tiles', async (req: Request, res: Response) => {
