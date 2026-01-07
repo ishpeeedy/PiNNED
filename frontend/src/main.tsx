@@ -6,6 +6,7 @@ import '../global.css';
 import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
 import Dashboard from './pages/Dashboard.tsx';
+import Board from './pages/Board.tsx';
 import { useAuthStore } from './stores/authStore';
 import Background from './components/Background';
 
@@ -45,6 +46,16 @@ function App() {
                     element={
                         isAuthenticated ? (
                             <Dashboard />
+                        ) : (
+                            <Navigate to="/login" />
+                        )
+                    }
+                />
+                <Route
+                    path="/board/:id"
+                    element={
+                        isAuthenticated ? (
+                            <Board />
                         ) : (
                             <Navigate to="/login" />
                         )
