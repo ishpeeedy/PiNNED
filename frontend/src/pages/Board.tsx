@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { boardAPI, tileAPI } from '@/services/api';
 import type { Board as BoardType, Tile } from '@/types';
 import { toast } from 'sonner';
+import Navbar from '@/components/Navbar';
 
 const Board = () => {
     const { id } = useParams<{ id: string }>(); // Get board ID from URL
@@ -44,6 +45,19 @@ const Board = () => {
         );
     }
 
+    const handleBoardUpdate = async (updates: Partial<BoardType>) => {
+        if (!id || !board) return;
+
+        try {
+            const updatedBoard = await boardAPI.updateBoard(id, updates);
+            setBoard(updatedBoard);
+            toast.success('Board updated');
+        } catch (error) {
+            console.error('Failed to update board:', error);
+            toast.error('Failed to update board');
+        }
+    };
+
     if (!board) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -54,15 +68,7 @@ const Board = () => {
 
     return (
         <div className="min-h-screen">
-            {/* Simple header for now */}
-            <div className="p-8 border-b-4 border-black bg-secondary-background">
-                <h1 className="text-4xl font-bold">
-                    {board.icon} {board.title}
-                </h1>
-                {board.description && (
-                    <p className="text-lg mt-2">{board.description}</p>
-                )}
-            </div>
+            <Navbar board={board} onBoardUpdate={handleBoardUpdate} />
 
             {/* Canvas area - simple list for now */}
             <div className="p-8">

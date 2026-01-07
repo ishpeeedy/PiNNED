@@ -54,11 +54,7 @@ function App() {
                 <Route
                     path="/board/:id"
                     element={
-                        isAuthenticated ? (
-                            <Board />
-                        ) : (
-                            <Navigate to="/login" />
-                        )
+                        isAuthenticated ? <Board /> : <Navigate to="/login" />
                     }
                 />
                 <Route
