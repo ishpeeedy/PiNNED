@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
+import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
     DropdownMenu,
@@ -38,7 +39,7 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
     };
 
     return (
-        <nav className="bg-secondary-background border-b-4 border-black px-6 py-1 flex items-center justify-between">
+        <nav className="bg-secondary-background border-b-4 border-black px-6 py-1 flex items-center gap-4">
             {/* Left: Logo */}
             <div
                 onClick={() => navigate('/dashboard')}
@@ -49,33 +50,44 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
 
             {/* Center: Board Name + Settings (only show on board pages) */}
             {board && (
-                <div className="flex items-center gap-3">
-                    <span className="text-2xl">{board.icon}</span>
-
+                <div className="flex-1 flex items-center justify-center gap-3">
                     {isEditingTitle ? (
-                        <input
-                            type="text"
-                            value={editedTitle}
-                            onChange={(e) => setEditedTitle(e.target.value)}
-                            onBlur={handleTitleSave}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleTitleSave();
-                                if (e.key === 'Escape') {
-                                    setEditedTitle(board.title);
-                                    setIsEditingTitle(false);
-                                }
-                            }}
-                            onFocus={(e) => e.target.select()}
-                            autoFocus
-                            className="text-2xl font-bold px-2 py-1 bg-gray-100 rounded w-2xl focus:outline-none"
-                        />
+                        <div className="relative max-w-md w-full">
+                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xl">
+                                {board.icon}
+                            </span>
+                            <Input
+                                type="text"
+                                value={editedTitle}
+                                onChange={(e) => setEditedTitle(e.target.value)}
+                                onBlur={handleTitleSave}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleTitleSave();
+                                    if (e.key === 'Escape') {
+                                        setEditedTitle(board.title);
+                                        setIsEditingTitle(false);
+                                    }
+                                }}
+                                onFocus={(e) => e.target.select()}
+                                autoFocus
+                                className="pl-10"
+                            />
+                        </div>
                     ) : (
-                        <h1
+                        <div
+                            className="relative max-w-md w-full"
                             onClick={() => setIsEditingTitle(true)}
-                            className="text-2xl font-bold cursor-text px-2 py-1 bg-gray-100  rounded transition-colors hover:bg-gray-100 w-2xl truncate"
                         >
-                            {board.title}
-                        </h1>
+                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xl">
+                                {board.icon}
+                            </span>
+                            <Input
+                                type="text"
+                                value={board.title}
+                                readOnly
+                                className="pl-10 cursor-text"
+                            />
+                        </div>
                     )}
 
                     {/* Settings Button */}

@@ -1,4 +1,16 @@
-import { Type, Image, Link, Undo, Redo, Search, ZoomIn, ZoomOut, Check, Loader2, AlertCircle } from 'lucide-react';
+import {
+    Type,
+    Image,
+    Link,
+    Undo,
+    Redo,
+    Search,
+    ZoomIn,
+    ZoomOut,
+    Check,
+    Loader2,
+    AlertCircle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -18,24 +30,24 @@ const Toolbar = ({ onCreateTile, saveStatus = 'saved' }: ToolbarProps) => {
         saved: {
             icon: Check,
             text: 'Saved',
-            color: 'text-green-600',
+            color: 'text-gray-500',
         },
         saving: {
             icon: Loader2,
             text: 'Saving...',
-            color: 'text-yellow-600',
+            color: 'text-gray-500',
         },
         error: {
             icon: AlertCircle,
             text: 'Error',
-            color: 'text-red-600',
+            color: 'text-gray-500',
         },
     };
 
     const StatusIcon = statusConfig[saveStatus].icon;
 
     return (
-        <div className="bg-secondary-background border-b-4 border-black px-6 py-3 flex items-center justify-between gap-4">
+        <div className="bg-secondary-background border-b-4 border-black px-6 py-3 flex items-center gap-4">
             {/* Left: Create Tile Buttons */}
             <div className="flex items-center gap-2">
                 <Button
@@ -88,13 +100,13 @@ const Toolbar = ({ onCreateTile, saveStatus = 'saved' }: ToolbarProps) => {
             </div>
 
             {/* Center: Search */}
-            <div className="flex-1 max-w-md">
-                <div className="relative">
+            <div className="flex-1 flex justify-center">
+                <div className="relative max-w-md w-full">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
                     <Input
                         type="text"
                         placeholder="Search tiles..."
-                        className="pl-10"
+                        className="pl-10 text-black"
                         onFocus={() => toast.info('Search (coming soon)')}
                     />
                 </div>
@@ -103,8 +115,12 @@ const Toolbar = ({ onCreateTile, saveStatus = 'saved' }: ToolbarProps) => {
             {/* Right: Save Status + Zoom Controls */}
             <div className="flex items-center gap-4">
                 {/* Save Status */}
-                <div className={`flex items-center gap-1.5 text-sm font-medium ${statusConfig[saveStatus].color}`}>
-                    <StatusIcon className={`w-4 h-4 ${saveStatus === 'saving' ? 'animate-spin' : ''}`} />
+                <div
+                    className={`flex items-center gap-1.5 text-sm font-medium ${statusConfig[saveStatus].color}`}
+                >
+                    <StatusIcon
+                        className={`w-4 h-4 ${saveStatus === 'saving' ? 'animate-spin' : ''}`}
+                    />
                     <span>{statusConfig[saveStatus].text}</span>
                 </div>
 
@@ -121,7 +137,7 @@ const Toolbar = ({ onCreateTile, saveStatus = 'saved' }: ToolbarProps) => {
                     >
                         <ZoomOut className="w-4 h-4" />
                     </Button>
-                    <span className="text-sm font-medium min-w-[3rem] text-center">
+                    <span className="text-lg font-medium min-w-[4rem] text-center">
                         100%
                     </span>
                     <Button
