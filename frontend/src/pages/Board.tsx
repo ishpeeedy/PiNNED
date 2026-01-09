@@ -4,6 +4,7 @@ import { boardAPI, tileAPI } from '@/services/api';
 import type { Board as BoardType, Tile } from '@/types';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
+import Toolbar from '@/components/Toolbar';
 
 const Board = () => {
     const { id } = useParams<{ id: string }>(); // Get board ID from URL
@@ -69,6 +70,7 @@ const Board = () => {
     return (
         <div className="min-h-screen">
             <Navbar board={board} onBoardUpdate={handleBoardUpdate} />
+            <Toolbar saveStatus="saved" />
 
             {/* Canvas area - simple list for now */}
             <div className="p-8">

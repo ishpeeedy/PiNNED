@@ -72,7 +72,7 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
                     ) : (
                         <h1
                             onClick={() => setIsEditingTitle(true)}
-                            className="text-2xl font-bold cursor-text px-2 py-1 rounded transition-colors hover:bg-gray-100 w-2xl truncate"
+                            className="text-2xl font-bold cursor-text px-2 py-1 bg-gray-100  rounded transition-colors hover:bg-gray-100 w-2xl truncate"
                         >
                             {board.title}
                         </h1>
