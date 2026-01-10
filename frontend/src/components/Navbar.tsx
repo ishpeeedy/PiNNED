@@ -39,7 +39,7 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
     };
 
     return (
-        <nav className="bg-secondary-background border-b-4 border-black px-6 py-1 flex items-center gap-4">
+        <nav className="bg-secondary-background border-b-4 border-black px-6 py-1 flex items-center justify-between gap-4">
             {/* Left: Logo */}
             <div
                 onClick={() => navigate('/dashboard')}
@@ -107,7 +107,7 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
             <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
                     <Avatar>
-                        <AvatarFallback className="bg-gradient-to-br from-purple-400 to-pink-400 text-white font-bold">
+                        <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-400 text-white font-bold">
                             {user?.name.charAt(0).toUpperCase()}
                         </AvatarFallback>
                     </Avatar>

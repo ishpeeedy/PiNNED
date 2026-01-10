@@ -5,6 +5,7 @@ import type { Board as BoardType, Tile } from '@/types';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Toolbar from '@/components/Toolbar';
+import Canvas from '@/components/Canvas';
 
 const Board = () => {
     const { id } = useParams<{ id: string }>(); // Get board ID from URL
@@ -68,63 +69,10 @@ const Board = () => {
     }
 
     return (
-        <div className="min-h-screen">
+        <div className="flex flex-col h-screen">
             <Navbar board={board} onBoardUpdate={handleBoardUpdate} />
             <Toolbar saveStatus="saved" />
-
-            {/* Canvas area - simple list for now */}
-            <div className="p-8">
-                <h2 className="text-2xl font-bold mb-4">
-                    Tiles ({tiles.length})
-                </h2>
-
-                {tiles.length === 0 ? (
-                    <p className="text-gray-500">
-                        No tiles yet. Create your first tile!
-                    </p>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {tiles.map((tile) => (
-                            <div
-                                key={tile._id}
-                                className="p-4 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                                style={{
-                                    backgroundColor: tile.style.backgroundColor,
-                                }}
-                            >
-                                {tile.data.header && (
-                                    <h3 className="font-bold text-lg mb-2">
-                                        {tile.data.header}
-                                    </h3>
-                                )}
-                                {tile.data.text && <p>{tile.data.text}</p>}
-                                {tile.data.imageUrl && (
-                                    <img
-                                        src={tile.data.imageUrl}
-                                        alt=""
-                                        className="mt-2"
-                                    />
-                                )}
-                                {tile.data.linkUrl && (
-                                    <a
-                                        href={tile.data.linkUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-600 underline"
-                                    >
-                                        {tile.data.linkTitle ||
-                                            tile.data.linkUrl}
-                                    </a>
-                                )}
-                                <p className="text-xs text-gray-500 mt-2">
-                                    Type: {tile.type} | Position: (
-                                    {tile.position.x}, {tile.position.y})
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+            <Canvas tiles={tiles} />
         </div>
     );
 };
