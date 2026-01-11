@@ -60,6 +60,61 @@ const Board = () => {
         }
     };
 
+    const handleCreateTile = async (type: 'text' | 'image' | 'link') => {
+        if (!id) return;
+
+        console.log('Creating tile:', type);
+
+        try {
+            // Default tile size
+            const defaultSize = {
+                width: 240,
+                height: 200,
+            };
+
+            // Position at center of viewport (accounting for canvas being below navbar/toolbar)
+            // For now, position at a simple grid location
+            const position = {
+                x: 200,
+                y: 200,
+            };
+
+            console.log('Tile data:', { type, position, size: defaultSize });
+
+            const newTile = await tileAPI.createTile(id, {
+                type,
+                position,
+                size: defaultSize,
+                style: {
+                    backgroundColor: board?.settings.tileColor || '#FBBF24',
+                    textcolor: '#000000',
+                },
+                data: {},
+            });
+
+            console.log('Tile created:', newTile);
+            setTiles((prev) => [...prev, newTile]);
+            toast.success(`${type} tile created`);
+        } catch (error) {
+            console.error('Failed to create tile:', error);
+            toast.error('Failed to create tile');
+        }
+    };
+
+    const handleTileUpdate = async (tileId: string, updates: Partial<Tile>) => {
+        if (!id) return;
+
+        try {
+            const updatedTile = await tileAPI.updateTile(id, tileId, updates);
+            setTiles((prev) =>
+                prev.map((tile) => (tile._id === tileId ? updatedTile : tile))
+            );
+        } catch (error) {
+            console.error('Failed to update tile:', error);
+            toast.error('Failed to update tile');
+        }
+    };
+
     if (!board) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -71,8 +126,8 @@ const Board = () => {
     return (
         <div className="flex flex-col h-screen">
             <Navbar board={board} onBoardUpdate={handleBoardUpdate} />
-            <Toolbar saveStatus="saved" />
-            <Canvas tiles={tiles} />
+            <Toolbar saveStatus="saved" onCreateTile={handleCreateTile} />
+            <Canvas tiles={tiles} onTileUpdate={handleTileUpdate} />
         </div>
     );
 };

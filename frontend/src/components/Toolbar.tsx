@@ -22,7 +22,6 @@ interface ToolbarProps {
 
 const Toolbar = ({ onCreateTile, saveStatus = 'saved' }: ToolbarProps) => {
     const handleCreateTile = (type: 'text' | 'image' | 'link') => {
-        toast.info(`Creating ${type} tile (coming soon)`);
         onCreateTile?.(type);
     };
 

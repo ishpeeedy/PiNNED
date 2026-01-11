@@ -1,5 +1,8 @@
 import { useRef, useState } from 'react';
 import type { Tile } from '@/types';
+import TextTile from './tiles/TextTile';
+import LinkTile from './tiles/LinkTile';
+import ImageTile from './tiles/ImageTile';
 
 interface CanvasProps {
     tiles: Tile[];
@@ -8,11 +11,13 @@ interface CanvasProps {
 
 const GRID_SIZE = 40; // Must match Background.tsx grid size
 
-const Canvas = ({ tiles }: CanvasProps) => {
+const Canvas = ({ tiles, onTileUpdate }: CanvasProps) => {
     const canvasRef = useRef<HTMLDivElement>(null);
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+    console.log('Canvas rendering with tiles:', tiles);
 
     // Handle canvas panning
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -73,34 +78,38 @@ const Canvas = ({ tiles }: CanvasProps) => {
                 {tiles.map((tile) => (
                     <div
                         key={tile._id}
-                        className="absolute bg-white border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] p-4 cursor-pointer"
+                        className="absolute"
                         style={{
                             left: tile.position.x,
                             top: tile.position.y,
                             width: tile.size.width,
                             height: tile.size.height,
-                            backgroundColor: tile.style.backgroundColor,
                         }}
                     >
-                        {/* Tile content based on type */}
                         {tile.type === 'text' && (
-                            <div className="text-black font-medium">
-                                {tile.data.text || 'Empty text tile'}
-                            </div>
-                        )}
-                        {tile.type === 'image' && (
-                            <div className="text-black text-sm">
-                                Image: {tile.data.imageUrl || 'No image'}
-                            </div>
+                            <TextTile
+                                tile={tile}
+                                onUpdate={(updates) =>
+                                    onTileUpdate?.(tile._id, updates)
+                                }
+                            />
                         )}
                         {tile.type === 'link' && (
-                            <div className="text-black text-sm">
-                                Link: {tile.data.linkUrl || 'No link'}
-                            </div>
+                            <LinkTile
+                                tile={tile}
+                                onUpdate={(updates) =>
+                                    onTileUpdate?.(tile._id, updates)
+                                }
+                            />
                         )}
-                        <div className="text-xs text-gray-500 mt-2">
-                            Position: ({tile.position.x}, {tile.position.y})
-                        </div>
+                        {tile.type === 'image' && (
+                            <ImageTile
+                                tile={tile}
+                                onUpdate={(updates) =>
+                                    onTileUpdate?.(tile._id, updates)
+                                }
+                            />
+                        )}
                     </div>
                 ))}
             </div>
