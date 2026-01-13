@@ -104,8 +104,11 @@ const Board = () => {
     const handleTileUpdate = async (tileId: string, updates: Partial<Tile>) => {
         if (!id) return;
 
+        console.log('handleTileUpdate called:', { tileId, updates });
+
         try {
             const updatedTile = await tileAPI.updateTile(id, tileId, updates);
+            console.log('Tile updated successfully:', updatedTile);
             setTiles((prev) =>
                 prev.map((tile) => (tile._id === tileId ? updatedTile : tile))
             );
