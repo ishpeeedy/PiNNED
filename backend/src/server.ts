@@ -15,6 +15,7 @@ import authRoutes from './routes/auth.ts';
 import boardRoutes from './routes/board.ts';
 import tileRoutes from './routes/tile.ts';
 import uploadRoutes from './routes/upload.ts';
+import metadataRoutes from './routes/metadata.ts';
 import { initializeCloudinary } from './config/cloudinary.ts';
 
 // Initialize Cloudinary AFTER env is loaded
@@ -34,6 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardRoutes);
 app.use('/api', tileRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/metadata', metadataRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({

@@ -118,3 +118,12 @@ export const tileAPI = {
         return response.data;
     },
 };
+
+export const metadataAPI = {
+    fetchMetadata: async (url: string) => {
+        const response = await api.get('/api/metadata', {
+            params: { url },
+        });
+        return response.data;
+    },
+};
