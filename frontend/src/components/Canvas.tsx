@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
 import type { Tile } from '@/types';
 import TextTile from './tiles/TextTile';
@@ -17,8 +17,18 @@ const Canvas = ({ tiles, onTileUpdate }: CanvasProps) => {
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const rafRef = useRef<number>();
 
     console.log('Canvas rendering with tiles:', tiles);
+
+    // Cleanup RAF on unmount
+    useEffect(() => {
+        return () => {
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+            }
+        };
+    }, []);
 
     // Handle canvas panning
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -31,15 +41,27 @@ const Canvas = ({ tiles, onTileUpdate }: CanvasProps) => {
 
     const handleMouseMove = (e: React.MouseEvent) => {
         if (isDragging) {
-            setPan({
-                x: e.clientX - dragStart.x,
-                y: e.clientY - dragStart.y,
+            // Cancel any pending animation frame
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+            }
+
+            // Schedule update on next frame
+            rafRef.current = requestAnimationFrame(() => {
+                setPan({
+                    x: e.clientX - dragStart.x,
+                    y: e.clientY - dragStart.y,
+                });
             });
         }
     };
 
     const handleMouseUp = () => {
         setIsDragging(false);
+        // Cancel any pending animation frame on mouse up
+        if (rafRef.current) {
+            cancelAnimationFrame(rafRef.current);
+        }
     };
 
     // Snap pan to grid to keep visual grid aligned
