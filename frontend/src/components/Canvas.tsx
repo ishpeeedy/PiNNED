@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Rnd } from 'react-rnd';
 import type { Tile } from '@/types';
 import TextTile from './tiles/TextTile';
 import LinkTile from './tiles/LinkTile';
@@ -22,6 +23,7 @@ const Canvas = ({ tiles, onTileUpdate }: CanvasProps) => {
     // Handle canvas panning
     const handleMouseDown = (e: React.MouseEvent) => {
         if (e.target === canvasRef.current) {
+            e.preventDefault();
             setIsDragging(true);
             setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
         }
@@ -49,13 +51,14 @@ const Canvas = ({ tiles, onTileUpdate }: CanvasProps) => {
     return (
         <div
             ref={canvasRef}
-            className="relative flex-1 overflow-hidden cursor-move"
+            className="relative flex-1 overflow-hidden cursor-move select-none"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             style={{
                 backgroundColor: 'var(--secondary-background)',
+                userSelect: isDragging ? 'none' : 'auto',
             }}
         >
             {/* Grid background - aligned to snapped pan */}
@@ -76,41 +79,83 @@ const Canvas = ({ tiles, onTileUpdate }: CanvasProps) => {
                 }}
             >
                 {tiles.map((tile) => (
-                    <div
+                    <Rnd
                         key={tile._id}
-                        className="absolute"
-                        style={{
-                            left: tile.position.x,
-                            top: tile.position.y,
+                        default={{
+                            x: tile.position.x,
+                            y: tile.position.y,
                             width: tile.size.width,
                             height: tile.size.height,
                         }}
+                        dragHandleClassName="tile-drag-handle"
+                        dragGrid={[GRID_SIZE, GRID_SIZE]}
+                        resizeGrid={[GRID_SIZE, GRID_SIZE]}
+                        minWidth={GRID_SIZE * 2}
+                        minHeight={GRID_SIZE * 2}
+                        disableDragging={false}
+                        onDragStop={(e, d) => {
+                            onTileUpdate?.(tile._id, {
+                                position: { x: d.x, y: d.y },
+                            });
+                        }}
+                        onResizeStop={(e, direction, ref, delta, position) => {
+                            onTileUpdate?.(tile._id, {
+                                size: {
+                                    width: parseInt(ref.style.width),
+                                    height: parseInt(ref.style.height),
+                                },
+                                position,
+                            });
+                        }}
+                        enableResizing={{
+                            bottom: true,
+                            bottomLeft: true,
+                            bottomRight: true,
+                            left: true,
+                            right: true,
+                            top: true,
+                            topLeft: true,
+                            topRight: true,
+                        }}
                     >
-                        {tile.type === 'text' && (
-                            <TextTile
-                                tile={tile}
-                                onUpdate={(updates) =>
-                                    onTileUpdate?.(tile._id, updates)
-                                }
-                            />
-                        )}
-                        {tile.type === 'link' && (
-                            <LinkTile
-                                tile={tile}
-                                onUpdate={(updates) =>
-                                    onTileUpdate?.(tile._id, updates)
-                                }
-                            />
-                        )}
-                        {tile.type === 'image' && (
-                            <ImageTile
-                                tile={tile}
-                                onUpdate={(updates) =>
-                                    onTileUpdate?.(tile._id, updates)
-                                }
-                            />
-                        )}
-                    </div>
+                        <div className="h-full w-full flex flex-col select-none">
+                            {/* Drag handle bar */}
+                            <div className="tile-drag-handle bg-black/5 border-b-2 border-black px-3 py-2 cursor-grab active:cursor-grabbing flex items-center flex-shrink-0 user-select-none">
+                                <div className="flex gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-black/30"></div>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-black/30"></div>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-black/30"></div>
+                                </div>
+                            </div>
+                            {/* Tile content */}
+                            <div className="flex-1 overflow-hidden select-text">
+                                {tile.type === 'text' && (
+                                    <TextTile
+                                        tile={tile}
+                                        onUpdate={(updates) =>
+                                            onTileUpdate?.(tile._id, updates)
+                                        }
+                                    />
+                                )}
+                                {tile.type === 'link' && (
+                                    <LinkTile
+                                        tile={tile}
+                                        onUpdate={(updates) =>
+                                            onTileUpdate?.(tile._id, updates)
+                                        }
+                                    />
+                                )}
+                                {tile.type === 'image' && (
+                                    <ImageTile
+                                        tile={tile}
+                                        onUpdate={(updates) =>
+                                            onTileUpdate?.(tile._id, updates)
+                                        }
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    </Rnd>
                 ))}
             </div>
         </div>
