@@ -12,6 +12,7 @@ const Board = () => {
     const [board, setBoard] = useState<BoardType | null>(null);
     const [tiles, setTiles] = useState<Tile[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isDeleteMode, setIsDeleteMode] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -118,6 +119,19 @@ const Board = () => {
         }
     };
 
+    const handleDeleteTile = async (tileId: string) => {
+        if (!id) return;
+
+        try {
+            await tileAPI.deleteTile(id, tileId);
+            setTiles((prev) => prev.filter((tile) => tile._id !== tileId));
+            toast.success('Tile deleted');
+        } catch (error) {
+            console.error('Failed to delete tile:', error);
+            toast.error('Failed to delete tile');
+        }
+    };
+
     if (!board) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -129,8 +143,18 @@ const Board = () => {
     return (
         <div className="flex flex-col h-screen">
             <Navbar board={board} onBoardUpdate={handleBoardUpdate} />
-            <Toolbar saveStatus="saved" onCreateTile={handleCreateTile} />
-            <Canvas tiles={tiles} onTileUpdate={handleTileUpdate} />
+            <Toolbar
+                saveStatus="saved"
+                onCreateTile={handleCreateTile}
+                isDeleteMode={isDeleteMode}
+                onToggleDelete={() => setIsDeleteMode(!isDeleteMode)}
+            />
+            <Canvas
+                tiles={tiles}
+                onTileUpdate={handleTileUpdate}
+                isDeleteMode={isDeleteMode}
+                onDeleteTile={handleDeleteTile}
+            />
         </div>
     );
 };

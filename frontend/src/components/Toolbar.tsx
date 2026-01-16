@@ -10,6 +10,7 @@ import {
     Check,
     Loader2,
     AlertCircle,
+    Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,10 +19,23 @@ import { toast } from 'sonner';
 interface ToolbarProps {
     onCreateTile?: (type: 'text' | 'image' | 'link') => void;
     saveStatus?: 'saved' | 'saving' | 'error';
+    isDeleteMode?: boolean;
+    onToggleDelete?: () => void;
 }
 
-const Toolbar = ({ onCreateTile, saveStatus = 'saved' }: ToolbarProps) => {
+const Toolbar = ({
+    onCreateTile,
+    saveStatus = 'saved',
+    isDeleteMode = false,
+    onToggleDelete,
+}: ToolbarProps) => {
+    console.log('Toolbar isDeleteMode:', isDeleteMode);
+
     const handleCreateTile = (type: 'text' | 'image' | 'link') => {
+        if (isDeleteMode) {
+            toast.error('Exit delete mode first');
+            return;
+        }
         onCreateTile?.(type);
     };
 
@@ -53,6 +67,7 @@ const Toolbar = ({ onCreateTile, saveStatus = 'saved' }: ToolbarProps) => {
                     onClick={() => handleCreateTile('text')}
                     className="gap-2"
                     title="Create text tile"
+                    disabled={isDeleteMode}
                 >
                     <Type className="w-4 h-4" />
                     Text
@@ -61,6 +76,7 @@ const Toolbar = ({ onCreateTile, saveStatus = 'saved' }: ToolbarProps) => {
                     onClick={() => handleCreateTile('image')}
                     className="gap-2"
                     title="Create image tile"
+                    disabled={isDeleteMode}
                 >
                     <Image className="w-4 h-4" />
                     Image
@@ -69,9 +85,19 @@ const Toolbar = ({ onCreateTile, saveStatus = 'saved' }: ToolbarProps) => {
                     onClick={() => handleCreateTile('link')}
                     className="gap-2"
                     title="Create link tile"
+                    disabled={isDeleteMode}
                 >
                     <Link className="w-4 h-4" />
                     Link
+                </Button>
+                <Button
+                    onClick={onToggleDelete}
+                    className="gap-2"
+                    title={isDeleteMode ? 'Exit delete mode' : 'Delete tiles'}
+                    variant={isDeleteMode ? 'reverse' : 'default'}
+                >
+                    <Trash2 className="w-4 h-4" />
+                    {isDeleteMode ? 'Done' : 'Delete'}
                 </Button>
 
                 {/* Separator */}

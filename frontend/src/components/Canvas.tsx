@@ -8,18 +8,26 @@ import ImageTile from './tiles/ImageTile';
 interface CanvasProps {
     tiles: Tile[];
     onTileUpdate?: (tileId: string, updates: Partial<Tile>) => void;
+    isDeleteMode?: boolean;
+    onDeleteTile?: (tileId: string) => void;
 }
 
 const GRID_SIZE = 40; // Must match Background.tsx grid size
 
-const Canvas = ({ tiles, onTileUpdate }: CanvasProps) => {
+const Canvas = ({
+    tiles,
+    onTileUpdate,
+    isDeleteMode = false,
+    onDeleteTile,
+}: CanvasProps) => {
     const canvasRef = useRef<HTMLDivElement>(null);
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-    const rafRef = useRef<number>();
+    const rafRef = useRef<number | undefined>(undefined);
 
     console.log('Canvas rendering with tiles:', tiles);
+    console.log('Canvas isDeleteMode:', isDeleteMode);
 
     // Cleanup RAF on unmount
     useEffect(() => {
@@ -114,13 +122,27 @@ const Canvas = ({ tiles, onTileUpdate }: CanvasProps) => {
                         resizeGrid={[GRID_SIZE, GRID_SIZE]}
                         minWidth={GRID_SIZE * 2}
                         minHeight={GRID_SIZE * 2}
-                        disableDragging={false}
-                        onDragStop={(e, d) => {
+                        disableDragging={isDeleteMode}
+                        enableResizing={
+                            !isDeleteMode
+                                ? {
+                                      bottom: true,
+                                      bottomLeft: true,
+                                      bottomRight: true,
+                                      left: true,
+                                      right: true,
+                                      top: true,
+                                      topLeft: true,
+                                      topRight: true,
+                                  }
+                                : false
+                        }
+                        onDragStop={(_, d) => {
                             onTileUpdate?.(tile._id, {
                                 position: { x: d.x, y: d.y },
                             });
                         }}
-                        onResizeStop={(e, direction, ref, delta, position) => {
+                        onResizeStop={(_, __, ref, ___, position) => {
                             onTileUpdate?.(tile._id, {
                                 size: {
                                     width: parseInt(ref.style.width),
@@ -129,26 +151,19 @@ const Canvas = ({ tiles, onTileUpdate }: CanvasProps) => {
                                 position,
                             });
                         }}
-                        enableResizing={{
-                            bottom: true,
-                            bottomLeft: true,
-                            bottomRight: true,
-                            left: true,
-                            right: true,
-                            top: true,
-                            topLeft: true,
-                            topRight: true,
-                        }}
                     >
-                        <div className="h-full w-full flex flex-col select-none">
+                        <div
+                            className={`h-full w-full flex flex-col select-none ${
+                                isDeleteMode
+                                    ? 'ring-4 ring-red-500 cursor-pointer'
+                                    : ''
+                            }`}
+                            onClick={() =>
+                                isDeleteMode && onDeleteTile?.(tile._id)
+                            }
+                        >
                             {/* Drag handle bar */}
-                            <div className="tile-drag-handle bg-black/5 border-b-2 border-black px-3 py-2 cursor-grab active:cursor-grabbing flex items-center flex-shrink-0 user-select-none">
-                                <div className="flex gap-1.5">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-black/30"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-black/30"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-black/30"></div>
-                                </div>
-                            </div>
+                            <div className="tile-drag-handle bg-black/5 h-[40px] flex items-center justify-center flex-shrink-0 cursor-default hover:cursor-grab active:cursor-grabbing transition-colors hover:bg-black/8"></div>
                             {/* Tile content */}
                             <div className="flex-1 overflow-hidden select-text">
                                 {tile.type === 'text' && (
