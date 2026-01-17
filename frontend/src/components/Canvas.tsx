@@ -10,6 +10,10 @@ interface CanvasProps {
     onTileUpdate?: (tileId: string, updates: Partial<Tile>) => void;
     isDeleteMode?: boolean;
     onDeleteTile?: (tileId: string) => void;
+    onCreateTileFromDrop?: (
+        data: File | string,
+        position: { x: number; y: number }
+    ) => void;
 }
 
 const GRID_SIZE = 40; // Must match Background.tsx grid size
@@ -19,11 +23,13 @@ const Canvas = ({
     onTileUpdate,
     isDeleteMode = false,
     onDeleteTile,
+    onCreateTileFromDrop,
 }: CanvasProps) => {
     const canvasRef = useRef<HTMLDivElement>(null);
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [isDragOver, setIsDragOver] = useState(false);
     const rafRef = useRef<number | undefined>(undefined);
 
     console.log('Canvas rendering with tiles:', tiles);
@@ -72,6 +78,70 @@ const Canvas = ({
         }
     };
 
+    // Handle drag and drop
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.target === canvasRef.current) {
+            setIsDragOver(false);
+        }
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+
+        if (!onCreateTileFromDrop) return;
+
+        // Calculate drop position accounting for pan
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const x = e.clientX - rect.left - pan.x;
+        const y = e.clientY - rect.top - pan.y;
+
+        // Snap to grid
+        const position = {
+            x: Math.round(x / GRID_SIZE) * GRID_SIZE,
+            y: Math.round(y / GRID_SIZE) * GRID_SIZE,
+        };
+
+        // Handle file drops (from file explorer)
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            if (file.type.startsWith('image/')) {
+                onCreateTileFromDrop(file, position);
+                return;
+            }
+        }
+
+        // Handle URL drops (from browser)
+        const html = e.dataTransfer.getData('text/html');
+        const text = e.dataTransfer.getData('text/plain');
+
+        // Try to extract image URL from HTML
+        if (html) {
+            const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+            if (imgMatch && imgMatch[1]) {
+                onCreateTileFromDrop(imgMatch[1], position);
+                return;
+            }
+        }
+
+        // Check if plain text is an image URL
+        if (text && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(text)) {
+            onCreateTileFromDrop(text, position);
+            return;
+        }
+    };
+
     // Snap pan to grid to keep visual grid aligned
     const snappedPan = {
         x: Math.round(pan.x / GRID_SIZE) * GRID_SIZE,
@@ -81,11 +151,16 @@ const Canvas = ({
     return (
         <div
             ref={canvasRef}
-            className="relative flex-1 overflow-hidden cursor-move select-none"
+            className={`relative flex-1 overflow-hidden cursor-move select-none ${
+                isDragOver ? 'ring-4 ring-blue-500 ring-inset' : ''
+            }`}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
             style={{
                 backgroundColor: 'var(--secondary-background)',
                 userSelect: isDragging ? 'none' : 'auto',

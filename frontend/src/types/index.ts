@@ -29,7 +29,7 @@ export interface Tile {
     };
     style: {
         backgroundColor: string;
-        textcolor: string;
+        textColor: string;
     };
     data: {
         header?: string;

@@ -88,7 +88,7 @@ const Board = () => {
                 size: defaultSize,
                 style: {
                     backgroundColor: board?.settings.tileColor || '#FBBF24',
-                    textcolor: '#000000',
+                    textColor: '#000000',
                 },
                 data: {},
             });
@@ -132,6 +132,61 @@ const Board = () => {
         }
     };
 
+    const handleCreateTileFromDrop = async (
+        data: string | File,
+        position: { x: number; y: number }
+    ) => {
+        if (!id) return;
+
+        try {
+            let imageUrl = '';
+
+            // Handle file upload
+            if (data instanceof File) {
+                const formData = new FormData();
+                formData.append('image', data);
+
+                const response = await fetch(
+                    `http://localhost:5000/api/upload/image`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        },
+                        body: formData,
+                    }
+                );
+
+                if (!response.ok) throw new Error('Upload failed');
+                const result = await response.json();
+                imageUrl = result.url;
+            } else {
+                // Handle URL
+                imageUrl = data;
+            }
+
+            // Create tile with the image
+            const newTile = await tileAPI.createTile(id, {
+                type: 'image',
+                position,
+                size: { width: 240, height: 200 },
+                style: {
+                    backgroundColor: board?.settings.tileColor || '#FBBF24',
+                    textColor: '#000000',
+                },
+                data: {
+                    imageUrl,
+                },
+            });
+
+            setTiles((prev) => [...prev, newTile]);
+            toast.success('Image tile created');
+        } catch (error) {
+            console.error('Failed to create tile from drop:', error);
+            toast.error('Failed to create tile');
+        }
+    };
+
     if (!board) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -154,6 +209,7 @@ const Board = () => {
                 onTileUpdate={handleTileUpdate}
                 isDeleteMode={isDeleteMode}
                 onDeleteTile={handleDeleteTile}
+                onCreateTileFromDrop={handleCreateTileFromDrop}
             />
         </div>
     );
