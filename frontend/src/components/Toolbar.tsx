@@ -90,20 +90,11 @@ const Toolbar = ({
                     <Link className="w-4 h-4" />
                     Link
                 </Button>
-                <Button
-                    onClick={onToggleDelete}
-                    className="gap-2"
-                    title={isDeleteMode ? 'Exit delete mode' : 'Delete tiles'}
-                    variant={isDeleteMode ? 'reverse' : 'default'}
-                >
-                    <Trash2 className="w-4 h-4" />
-                    {isDeleteMode ? 'Done' : 'Delete'}
-                </Button>
 
                 {/* Separator */}
                 <div className="w-px h-8 bg-black mx-2" />
 
-                {/* Undo/Redo */}
+                {/* Undo/Redo/Delete */}
                 <Button
                     onClick={() => toast.info('Undo (coming soon)')}
                     disabled
@@ -121,6 +112,14 @@ const Toolbar = ({
                     title="Redo"
                 >
                     <Redo className="w-4 h-4" />
+                </Button>
+                <Button
+                    onClick={onToggleDelete}
+                    variant="neutral"
+                    className="gap-2"
+                    title={isDeleteMode ? 'Exit delete mode' : 'Delete tiles'}
+                >
+                    {isDeleteMode ? 'Done' : <Trash2 className="w-4 h-4" />}
                 </Button>
             </div>
 

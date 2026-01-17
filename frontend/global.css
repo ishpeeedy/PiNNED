@@ -77,3 +77,21 @@
         @apply font-heading;
     }
 }
+
+.delete-glow-border {
+    box-shadow:
+        0 0 2px 2px #fb3290,
+        0 0 8px 4px #fb329080,
+        0 0 16px 8px #fb329040,
+        0 0 20px 12px #fb329020;
+    contain: layout style paint;
+}
+
+.drag-glow-border {
+    box-shadow:
+        0 0 2px 2px #5294ff,
+        0 0 8px 4px #5294ff80,
+        0 0 16px 8px #5294ff40,
+        0 0 20px 12px #5294ff20;
+    contain: layout style paint;
+}

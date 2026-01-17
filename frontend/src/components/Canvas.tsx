@@ -30,6 +30,7 @@ const Canvas = ({
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [isDragOver, setIsDragOver] = useState(false);
+    const draggingTileRef = useRef<string | null>(null);
     const rafRef = useRef<number | undefined>(undefined);
 
     console.log('Canvas rendering with tiles:', tiles);
@@ -212,7 +213,27 @@ const Canvas = ({
                                   }
                                 : false
                         }
+                        onDragStart={() => {
+                            draggingTileRef.current = tile._id;
+                            const tileDiv = document.querySelector(
+                                `[data-tile-id="${tile._id}"]`
+                            ) as HTMLElement;
+                            if (tileDiv) {
+                                tileDiv.classList.add('drag-glow-border');
+                            }
+                        }}
                         onDragStop={(_, d) => {
+                            if (draggingTileRef.current === tile._id) {
+                                const tileDiv = document.querySelector(
+                                    `[data-tile-id="${tile._id}"]`
+                                ) as HTMLElement;
+                                if (tileDiv) {
+                                    tileDiv.classList.remove(
+                                        'drag-glow-border'
+                                    );
+                                }
+                                draggingTileRef.current = null;
+                            }
                             onTileUpdate?.(tile._id, {
                                 position: { x: d.x, y: d.y },
                             });
@@ -228,9 +249,10 @@ const Canvas = ({
                         }}
                     >
                         <div
+                            data-tile-id={tile._id}
                             className={`h-full w-full flex flex-col select-none ${
                                 isDeleteMode
-                                    ? 'ring-4 ring-red-500 cursor-pointer'
+                                    ? 'delete-glow-border cursor-pointer'
                                     : ''
                             }`}
                             onClick={() =>
