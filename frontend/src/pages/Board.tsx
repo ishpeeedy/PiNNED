@@ -14,6 +14,14 @@ const Board = () => {
     const [loading, setLoading] = useState(true);
     const [isDeleteMode, setIsDeleteMode] = useState(false);
 
+    const handleToggleDelete = () => {
+        const newDeleteMode = !isDeleteMode;
+        setIsDeleteMode(newDeleteMode);
+        if (newDeleteMode) {
+            toast.info('Delete mode active - click tiles to delete');
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             if (!id) return;
@@ -202,7 +210,7 @@ const Board = () => {
                 saveStatus="saved"
                 onCreateTile={handleCreateTile}
                 isDeleteMode={isDeleteMode}
-                onToggleDelete={() => setIsDeleteMode(!isDeleteMode)}
+                onToggleDelete={handleToggleDelete}
             />
             <Canvas
                 tiles={tiles}

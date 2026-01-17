@@ -4,6 +4,7 @@ import type { Tile } from '@/types';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { metadataAPI } from '@/services/api';
+import { toast } from 'sonner';
 
 interface LinkTileProps {
     tile: Tile;
@@ -61,12 +62,17 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
             if (linkTitle.trim()) return;
 
             setIsLoadingMetadata(true);
+            toast.loading('Fetching link metadata...');
             try {
                 const metadata = await metadataAPI.fetchMetadata(linkUrl);
                 setLinkTitle(metadata.title || '');
                 setLinkDescription(metadata.description || '');
+                toast.dismiss();
+                toast.success('Metadata loaded');
             } catch (error) {
                 console.error('Failed to fetch metadata:', error);
+                toast.dismiss();
+                toast.error('Failed to fetch metadata');
             } finally {
                 setIsLoadingMetadata(false);
             }
