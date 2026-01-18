@@ -21,6 +21,10 @@ interface ToolbarProps {
     saveStatus?: 'saved' | 'saving' | 'error';
     isDeleteMode?: boolean;
     onToggleDelete?: () => void;
+    onUndo?: () => void;
+    onRedo?: () => void;
+    canUndo?: boolean;
+    canRedo?: boolean;
 }
 
 const Toolbar = ({
@@ -28,6 +32,10 @@ const Toolbar = ({
     saveStatus = 'saved',
     isDeleteMode = false,
     onToggleDelete,
+    onUndo,
+    onRedo,
+    canUndo = false,
+    canRedo = false,
 }: ToolbarProps) => {
     console.log('Toolbar isDeleteMode:', isDeleteMode);
 
@@ -96,8 +104,8 @@ const Toolbar = ({
 
                 {/* Undo/Redo/Delete */}
                 <Button
-                    onClick={() => toast.info('Undo (coming soon)')}
-                    disabled
+                    onClick={onUndo}
+                    disabled={!canUndo}
                     variant="neutral"
                     className="gap-2"
                     title="Undo"
@@ -105,8 +113,8 @@ const Toolbar = ({
                     <Undo className="w-4 h-4" />
                 </Button>
                 <Button
-                    onClick={() => toast.info('Redo (coming soon)')}
-                    disabled
+                    onClick={onRedo}
+                    disabled={!canRedo}
                     variant="neutral"
                     className="gap-2"
                     title="Redo"

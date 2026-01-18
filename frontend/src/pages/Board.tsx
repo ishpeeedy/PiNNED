@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { boardAPI, tileAPI } from '@/services/api';
 import type { Board as BoardType, Tile } from '@/types';
@@ -14,11 +14,102 @@ const Board = () => {
     const [loading, setLoading] = useState(true);
     const [isDeleteMode, setIsDeleteMode] = useState(false);
 
+    // Undo/Redo history
+    const [history, setHistory] = useState<Tile[][]>([]);
+    const [historyIndex, setHistoryIndex] = useState(-1);
+    const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     const handleToggleDelete = () => {
         const newDeleteMode = !isDeleteMode;
         setIsDeleteMode(newDeleteMode);
         if (newDeleteMode) {
             toast.info('Delete mode active - click tiles to delete');
+        }
+    };
+
+    const saveToHistory = (newTiles: Tile[]) => {
+        // Remove any history after current index (for redo branch)
+        const newHistory = history.slice(0, historyIndex + 1);
+        // Add new state
+        newHistory.push(JSON.parse(JSON.stringify(newTiles)));
+        // Limit history to 50 states
+        if (newHistory.length > 50) {
+            newHistory.shift();
+        } else {
+            setHistoryIndex(historyIndex + 1);
+        }
+        setHistory(newHistory);
+    };
+
+    const syncTilesToBackend = async (tilesToSync: Tile[]) => {
+        if (!id) return;
+
+        try {
+            // Get current tiles from backend
+            const currentBackendTiles = await tileAPI.getTiles(id);
+            const currentIds = new Set(tilesToSync.map((t) => t._id));
+            const backendIds = new Set(currentBackendTiles.map((t) => t._id));
+
+            // Delete tiles that are in backend but not in current state
+            for (const backendTile of currentBackendTiles) {
+                if (!currentIds.has(backendTile._id)) {
+                    await tileAPI.deleteTile(id, backendTile._id);
+                }
+            }
+
+            // Create or update tiles that are in current state
+            for (const tile of tilesToSync) {
+                if (backendIds.has(tile._id)) {
+                    // Update existing tile
+                    await tileAPI.updateTile(id, tile._id, tile);
+                } else {
+                    // Recreate deleted tile (for undo)
+                    await tileAPI.createTile(id, {
+                        ...tile,
+                        _id: tile._id, // Preserve the ID
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Failed to sync tiles:', error);
+        }
+    };
+
+    const handleUndo = () => {
+        if (historyIndex > 0) {
+            const newIndex = historyIndex - 1;
+            setHistoryIndex(newIndex);
+            const restoredTiles = JSON.parse(JSON.stringify(history[newIndex]));
+            setTiles(restoredTiles);
+
+            // Debounced sync to backend
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current);
+            }
+            syncTimeoutRef.current = setTimeout(() => {
+                syncTilesToBackend(restoredTiles);
+            }, 1000);
+
+            toast.success('Undo');
+        }
+    };
+
+    const handleRedo = () => {
+        if (historyIndex < history.length - 1) {
+            const newIndex = historyIndex + 1;
+            setHistoryIndex(newIndex);
+            const restoredTiles = JSON.parse(JSON.stringify(history[newIndex]));
+            setTiles(restoredTiles);
+
+            // Debounced sync to backend
+            if (syncTimeoutRef.current) {
+                clearTimeout(syncTimeoutRef.current);
+            }
+            syncTimeoutRef.current = setTimeout(() => {
+                syncTilesToBackend(restoredTiles);
+            }, 1000);
+
+            toast.success('Redo');
         }
     };
 
@@ -37,6 +128,9 @@ const Board = () => {
 
                 setBoard(boardData);
                 setTiles(tilesData);
+                // Initialize history
+                setHistory([JSON.parse(JSON.stringify(tilesData))]);
+                setHistoryIndex(0);
             } catch (error) {
                 console.error('Failed to fetch board:', error);
                 toast.error('Failed to load board');
@@ -102,7 +196,9 @@ const Board = () => {
             });
 
             console.log('Tile created:', newTile);
-            setTiles((prev) => [...prev, newTile]);
+            const newTiles = [...tiles, newTile];
+            setTiles(newTiles);
+            saveToHistory(newTiles);
             toast.success(`${type} tile created`);
         } catch (error) {
             console.error('Failed to create tile:', error);
@@ -115,15 +211,22 @@ const Board = () => {
 
         console.log('handleTileUpdate called:', { tileId, updates });
 
+        // Optimistic update - update UI immediately
+        const optimisticTiles = tiles.map((tile) =>
+            tile._id === tileId ? { ...tile, ...updates } : tile
+        );
+        setTiles(optimisticTiles);
+        saveToHistory(optimisticTiles);
+
+        // Then sync with backend
         try {
-            const updatedTile = await tileAPI.updateTile(id, tileId, updates);
-            console.log('Tile updated successfully:', updatedTile);
-            setTiles((prev) =>
-                prev.map((tile) => (tile._id === tileId ? updatedTile : tile))
-            );
+            await tileAPI.updateTile(id, tileId, updates);
+            console.log('Tile updated successfully');
         } catch (error) {
             console.error('Failed to update tile:', error);
             toast.error('Failed to update tile');
+            // Revert on error
+            setTiles(tiles);
         }
     };
 
@@ -132,7 +235,9 @@ const Board = () => {
 
         try {
             await tileAPI.deleteTile(id, tileId);
-            setTiles((prev) => prev.filter((tile) => tile._id !== tileId));
+            const newTiles = tiles.filter((tile) => tile._id !== tileId);
+            setTiles(newTiles);
+            saveToHistory(newTiles);
             toast.success('Tile deleted');
         } catch (error) {
             console.error('Failed to delete tile:', error);
@@ -187,7 +292,9 @@ const Board = () => {
                 },
             });
 
-            setTiles((prev) => [...prev, newTile]);
+            const newTiles = [...tiles, newTile];
+            setTiles(newTiles);
+            saveToHistory(newTiles);
             toast.success('Image tile created');
         } catch (error) {
             console.error('Failed to create tile from drop:', error);
@@ -211,6 +318,10 @@ const Board = () => {
                 onCreateTile={handleCreateTile}
                 isDeleteMode={isDeleteMode}
                 onToggleDelete={handleToggleDelete}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                canUndo={historyIndex > 0}
+                canRedo={historyIndex < history.length - 1}
             />
             <Canvas
                 tiles={tiles}

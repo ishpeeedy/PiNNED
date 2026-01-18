@@ -187,9 +187,11 @@ const Canvas = ({
                 {tiles.map((tile) => (
                     <Rnd
                         key={tile._id}
-                        default={{
+                        position={{
                             x: tile.position.x,
                             y: tile.position.y,
+                        }}
+                        size={{
                             width: tile.size.width,
                             height: tile.size.height,
                         }}
