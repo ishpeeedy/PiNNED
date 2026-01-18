@@ -17,7 +17,8 @@ const Board = () => {
     // Undo/Redo history
     const [history, setHistory] = useState<Tile[][]>([]);
     const [historyIndex, setHistoryIndex] = useState(-1);
-    const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
 
     const handleToggleDelete = () => {
         const newDeleteMode = !isDeleteMode;
@@ -42,8 +43,9 @@ const Board = () => {
     };
 
     const syncTilesToBackend = async (tilesToSync: Tile[]) => {
-        if (!id) return;
+        if (!id || isSyncing) return;
 
+        setIsSyncing(true);
         try {
             // Get current tiles from backend
             const currentBackendTiles = await tileAPI.getTiles(id);
@@ -63,20 +65,32 @@ const Board = () => {
                     // Update existing tile
                     await tileAPI.updateTile(id, tile._id, tile);
                 } else {
-                    // Recreate deleted tile (for undo)
-                    await tileAPI.createTile(id, {
-                        ...tile,
-                        _id: tile._id, // Preserve the ID
-                    });
+                    // Recreate deleted tile (for undo) - backend will assign new ID
+                    const { _id, ...tileWithoutId } = tile;
+                    await tileAPI.createTile(id, tileWithoutId);
                 }
             }
+
+            // Fetch fresh data to get correct IDs and update history
+            const freshTiles = await tileAPI.getTiles(id);
+            setTiles(freshTiles);
+
+            // Update the current history entry with fresh IDs
+            setHistory((prev) => {
+                const updated = [...prev];
+                updated[historyIndex] = JSON.parse(JSON.stringify(freshTiles));
+                return updated;
+            });
         } catch (error) {
             console.error('Failed to sync tiles:', error);
+            toast.error('Failed to sync changes - try refreshing');
+        } finally {
+            setIsSyncing(false);
         }
     };
 
     const handleUndo = () => {
-        if (historyIndex > 0) {
+        if (historyIndex > 0 && !isSyncing) {
             const newIndex = historyIndex - 1;
             setHistoryIndex(newIndex);
             const restoredTiles = JSON.parse(JSON.stringify(history[newIndex]));
@@ -95,7 +109,7 @@ const Board = () => {
     };
 
     const handleRedo = () => {
-        if (historyIndex < history.length - 1) {
+        if (historyIndex < history.length - 1 && !isSyncing) {
             const newIndex = historyIndex + 1;
             setHistoryIndex(newIndex);
             const restoredTiles = JSON.parse(JSON.stringify(history[newIndex]));
@@ -320,8 +334,8 @@ const Board = () => {
                 onToggleDelete={handleToggleDelete}
                 onUndo={handleUndo}
                 onRedo={handleRedo}
-                canUndo={historyIndex > 0}
-                canRedo={historyIndex < history.length - 1}
+                canUndo={historyIndex > 0 && !isSyncing}
+                canRedo={historyIndex < history.length - 1 && !isSyncing}
             />
             <Canvas
                 tiles={tiles}
