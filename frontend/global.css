@@ -13,6 +13,8 @@
     --ring: oklch(0% 0 0);
     --overlay: oklch(0% 0 0 / 0.8);
     --shadow: 4px 4px 0px 0px var(--border);
+    --yellow: oklch(96.79% 0.0654 102.26);
+    --yellow-bright: #facc00;
     --chart-1: #a985ff;
     --chart-2: #00d696;
     --chart-3: #facc00;
@@ -47,6 +49,8 @@
     --color-border: var(--border);
     --color-overlay: var(--overlay);
     --color-ring: var(--ring);
+    --color-yellow: var(--yellow);
+    --color-yellow-bright: var(--yellow-bright);
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
     --color-chart-3: var(--chart-3);
@@ -94,4 +98,18 @@
         0 0 16px 8px #5294ff40,
         0 0 20px 12px #5294ff20;
     contain: layout style paint;
+}
+
+.isometric-dots {
+    background-color: var(--secondary-background);
+    background-image: radial-gradient(
+        circle,
+        var(--border) 1px,
+        transparent 1px
+    );
+    background-size: 30px 30px;
+    background-position:
+        0 0,
+        15px 15px;
+    transform-origin: center;
 }

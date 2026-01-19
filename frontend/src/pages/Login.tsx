@@ -40,7 +40,7 @@ export default function Login() {
 
     return (
         <div className="flex min-h-screen items-center justify-center">
-            <Card className="w-full max-w-sm">
+            <Card className="w-full max-w-sm shadow-shadow">
                 <CardHeader>
                     <CardTitle>Login to PINNED</CardTitle>
                     <CardDescription>

@@ -74,6 +74,12 @@ router.post('/boards/:boardId/tiles', async (req: Request, res: Response) => {
             zIndex,
         });
         await tile.save();
+
+        // Update board's updatedAt timestamp and increment tile count
+        board.updatedAt = new Date();
+        board.tileCount += 1;
+        await board.save();
+
         return res.status(201).json(tile);
     } catch (error) {
         return res.status(500).json({ message: 'Internal server error' });
@@ -99,6 +105,11 @@ router.patch(
             delete updates.boardId;
             Object.assign(tile, updates);
             await tile.save();
+
+            // Update board's updatedAt timestamp
+            board.updatedAt = new Date();
+            await board.save();
+
             return res.json(tile);
         } catch (error) {
             return res.status(500).json({ message: 'internal server error' });
@@ -121,6 +132,12 @@ router.delete(
                 return res.status(403).json({ message: 'Access denied' });
             }
             await Tile.findByIdAndDelete(id);
+
+            // Update board's updatedAt timestamp and decrement tile count
+            board.updatedAt = new Date();
+            board.tileCount = Math.max(0, board.tileCount - 1);
+            await board.save();
+
             return res.json({ message: 'Tile deleted successfully' });
         } catch (error) {
             return res.status(500).json({ message: 'internal server error' });

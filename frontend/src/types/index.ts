@@ -11,6 +11,7 @@ export interface Board {
     };
     visibility: 'private' | 'public';
     allowDuplication: boolean;
+    tileCount?: number;
     createdAt: string;
     updatedAt: string;
 }

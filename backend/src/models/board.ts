@@ -12,6 +12,7 @@ export interface IBoard extends Document {
     };
     visibility: 'private' | 'public';
     allowDuplication: boolean;
+    tileCount: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -40,6 +41,10 @@ const boardSchema = new Schema<IBoard>(
         allowDuplication: {
             type: Boolean,
             default: false,
+        },
+        tileCount: {
+            type: Number,
+            default: 0,
         },
     },
     { timestamps: true }
