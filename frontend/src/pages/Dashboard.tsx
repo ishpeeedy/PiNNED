@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { boardAPI } from '@/services/api';
-import logo from '@/assets/logo.png';
+import BoardThumbnail from '@/components/BoardThumbnail';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -107,7 +107,10 @@ export default function Dashboard() {
                 className="group cursor-pointer shadow-shadow"
                 onClick={() => navigate(`/board/${board._id}`)}
             >
-                <img src={logo} alt={board.title} />
+                <BoardThumbnail
+                    canvasColor={board.settings.canvasColor}
+                    tileColor={board.settings.tileColor}
+                />
 
                 <CardHeader className="pb-3">
                     <CardTitle className="text-lg truncate flex-1">
