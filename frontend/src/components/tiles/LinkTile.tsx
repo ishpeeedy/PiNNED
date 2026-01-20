@@ -18,22 +18,39 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
     const [linkDescription, setLinkDescription] = useState(
         tile.data?.linkDescription || ''
     );
+    const [thumbnailUrl, setThumbnailUrl] = useState(
+        tile.data?.thumbnailUrl || ''
+    );
+    const [author, setAuthor] = useState(tile.data?.author || '');
+    const [publishDate, setPublishDate] = useState(
+        tile.data?.publishDate || ''
+    );
     const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
     const urlInputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-
-    console.log('LinkTile rendering:', {
-        isEditing,
-        linkUrl,
-        linkTitle,
-        data: tile.data,
-    });
 
     useEffect(() => {
         if (isEditing && urlInputRef.current) {
             urlInputRef.current.focus();
         }
     }, [isEditing]);
+
+    const handleSave = () => {
+        setIsEditing(false);
+        if (onUpdate) {
+            onUpdate({
+                data: {
+                    ...(tile.data || {}),
+                    linkUrl: linkUrl.trim(),
+                    linkTitle: linkTitle.trim(),
+                    linkDescription: linkDescription.trim(),
+                    thumbnailUrl: thumbnailUrl.trim(),
+                    author: author.trim(),
+                    publishDate: publishDate.trim(),
+                },
+            });
+        }
+    };
 
     useEffect(() => {
         if (!isEditing) return;
@@ -51,14 +68,22 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isEditing, linkUrl, linkTitle, linkDescription]);
+    }, [
+        isEditing,
+        linkUrl,
+        linkTitle,
+        linkDescription,
+        thumbnailUrl,
+        author,
+        publishDate,
+        onUpdate,
+        tile.data,
+    ]);
 
     // Auto-fetch metadata when URL changes
     useEffect(() => {
         const fetchMetadata = async () => {
             if (!linkUrl || !linkUrl.startsWith('http')) return;
-
-            // Don't fetch if title is already set (user manually entered it)
             if (linkTitle.trim()) return;
 
             setIsLoadingMetadata(true);
@@ -67,6 +92,9 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                 const metadata = await metadataAPI.fetchMetadata(linkUrl);
                 setLinkTitle(metadata.title || '');
                 setLinkDescription(metadata.description || '');
+                setThumbnailUrl(metadata.image || '');
+                setAuthor(metadata.author || '');
+                setPublishDate(metadata.date || '');
                 toast.dismiss();
                 toast.success('Metadata loaded');
             } catch (error) {
@@ -78,23 +106,9 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
             }
         };
 
-        const timer = setTimeout(fetchMetadata, 500); // Debounce
+        const timer = setTimeout(fetchMetadata, 500);
         return () => clearTimeout(timer);
     }, [linkUrl]);
-
-    const handleSave = () => {
-        setIsEditing(false);
-        if (onUpdate) {
-            onUpdate({
-                data: {
-                    ...(tile.data || {}),
-                    linkUrl: linkUrl.trim(),
-                    linkTitle: linkTitle.trim(),
-                    linkDescription: linkDescription.trim(),
-                },
-            });
-        }
-    };
 
     const handleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -103,23 +117,16 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
         }
     };
 
-    const handleLinkClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (e.ctrlKey || e.metaKey) {
-            window.open(linkUrl, '_blank', 'noopener,noreferrer');
-        }
-    };
-
     return (
         <Card
             ref={containerRef}
-            className="h-full w-full cursor-pointer"
+            className="h-full w-full cursor-pointer p-0 gap-0"
             style={{ backgroundColor: tile.style.backgroundColor }}
             onClick={handleClick}
         >
             <ScrollArea className="h-full w-full">
                 {isEditing ? (
-                    <div className="p-4 space-y-2 w-full">
+                    <div className="p-3 space-y-2">
                         <input
                             ref={urlInputRef}
                             type="text"
@@ -138,40 +145,65 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                             value={linkTitle}
                             onChange={(e) => setLinkTitle(e.target.value)}
                             placeholder="Link title (optional)"
-                            className="w-full font-bold bg-transparent border-b-2 border-black outline-none pb-1"
+                            className="w-full text-lg font-bold bg-transparent border-b-2 border-black outline-none pb-1"
                             disabled={isLoadingMetadata}
                         />
                         <textarea
                             value={linkDescription}
                             onChange={(e) => setLinkDescription(e.target.value)}
                             placeholder="Description (optional)"
-                            className="w-full text-sm bg-transparent outline-none resize-none"
+                            className="w-full bg-transparent outline-none resize-none min-h-[100px]"
                             rows={3}
                             disabled={isLoadingMetadata}
                         />
                     </div>
                 ) : (
-                    <div className="p-4 space-y-2 w-full">
+                    <div className="p-3 space-y-2">
+                        {thumbnailUrl && (
+                            <div className="flex justify-center">
+                                <img
+                                    src={thumbnailUrl}
+                                    alt={linkTitle || 'Link preview'}
+                                    className="max-w-full h-auto max-h-48 rounded-base border-2 border-border"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                        )}
                         {linkTitle && (
-                            <h3 className="font-bold text-base break-words overflow-wrap-anywhere">
-                                {linkTitle}
-                            </h3>
+                            <h3 className="text-lg font-bold">{linkTitle}</h3>
+                        )}
+                        {(author || publishDate) && (
+                            <p className="text-xs text-gray-500">
+                                {author && <span>by {author}</span>}
+                                {author && publishDate && <span> • </span>}
+                                {publishDate && (
+                                    <span>
+                                        {new Date(
+                                            publishDate
+                                        ).toLocaleDateString()}
+                                    </span>
+                                )}
+                            </p>
                         )}
                         {linkDescription && (
-                            <p className="text-sm text-gray-700 break-words overflow-wrap-anywhere">
+                            <p className="whitespace-pre-wrap">
                                 {linkDescription}
                             </p>
                         )}
-                        <div
-                            className="flex items-center gap-1 text-blue-600 text-sm cursor-pointer hover:underline"
-                            onClick={handleLinkClick}
-                            title="Ctrl+Click to open"
+                        <a
+                            href={linkUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 text-sm hover:underline inline-flex items-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
                         >
                             <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">
+                            <span className="break-all">
                                 {linkUrl || 'Click to add link...'}
                             </span>
-                        </div>
+                        </a>
                     </div>
                 )}
             </ScrollArea>

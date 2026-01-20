@@ -62,13 +62,13 @@ const TextTile = ({ tile, onUpdate }: TextTileProps) => {
     return (
         <Card
             ref={containerRef}
-            className="h-full w-full cursor-pointer"
+            className="h-full w-full cursor-pointer p-0 gap-0"
             style={{ backgroundColor: tile.style.backgroundColor }}
             onClick={handleClick}
         >
             <ScrollArea className="h-full w-full">
                 {isEditing ? (
-                    <div className="p-4 space-y-2">
+                    <div className="p-3 space-y-2">
                         <input
                             type="text"
                             value={header}
@@ -86,7 +86,7 @@ const TextTile = ({ tile, onUpdate }: TextTileProps) => {
                         />
                     </div>
                 ) : (
-                    <div className="p-4 space-y-2">
+                    <div className="p-3 space-y-2">
                         {header && (
                             <h3 className="text-lg font-bold">{header}</h3>
                         )}

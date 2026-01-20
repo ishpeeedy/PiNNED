@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { Rnd } from 'react-rnd';
 import type { Tile } from '@/types';
 import TextTile from './tiles/TextTile';
@@ -14,6 +14,7 @@ interface CanvasProps {
         data: File | string,
         position: { x: number; y: number }
     ) => void;
+    zoom?: number;
 }
 
 const GRID_SIZE = 40; // Must match Background.tsx grid size
@@ -24,6 +25,7 @@ const Canvas = ({
     isDeleteMode = false,
     onDeleteTile,
     onCreateTileFromDrop,
+    zoom = 1,
 }: CanvasProps) => {
     const canvasRef = useRef<HTMLDivElement>(null);
     const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -31,19 +33,9 @@ const Canvas = ({
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [isDragOver, setIsDragOver] = useState(false);
     const draggingTileRef = useRef<string | null>(null);
-    const rafRef = useRef<number | undefined>(undefined);
 
     console.log('Canvas rendering with tiles:', tiles);
     console.log('Canvas isDeleteMode:', isDeleteMode);
-
-    // Cleanup RAF on unmount
-    useEffect(() => {
-        return () => {
-            if (rafRef.current) {
-                cancelAnimationFrame(rafRef.current);
-            }
-        };
-    }, []);
 
     // Handle canvas panning
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -56,27 +48,15 @@ const Canvas = ({
 
     const handleMouseMove = (e: React.MouseEvent) => {
         if (isDragging) {
-            // Cancel any pending animation frame
-            if (rafRef.current) {
-                cancelAnimationFrame(rafRef.current);
-            }
-
-            // Schedule update on next frame
-            rafRef.current = requestAnimationFrame(() => {
-                setPan({
-                    x: e.clientX - dragStart.x,
-                    y: e.clientY - dragStart.y,
-                });
+            setPan({
+                x: e.clientX - dragStart.x,
+                y: e.clientY - dragStart.y,
             });
         }
     };
 
     const handleMouseUp = () => {
         setIsDragging(false);
-        // Cancel any pending animation frame on mouse up
-        if (rafRef.current) {
-            cancelAnimationFrame(rafRef.current);
-        }
     };
 
     // Handle drag and drop
@@ -181,7 +161,8 @@ const Canvas = ({
             <div
                 className="absolute"
                 style={{
-                    transform: `translate(${snappedPan.x}px, ${snappedPan.y}px)`,
+                    transform: `translate(${snappedPan.x}px, ${snappedPan.y}px) scale(${zoom})`,
+                    transformOrigin: '0 0',
                 }}
             >
                 {tiles.map((tile) => (
@@ -200,6 +181,7 @@ const Canvas = ({
                         resizeGrid={[GRID_SIZE, GRID_SIZE]}
                         minWidth={GRID_SIZE * 2}
                         minHeight={GRID_SIZE * 2}
+                        scale={zoom}
                         disableDragging={isDeleteMode}
                         enableResizing={
                             !isDeleteMode

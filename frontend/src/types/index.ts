@@ -40,6 +40,8 @@ export interface Tile {
         linkTitle?: string;
         linkDescription?: string;
         thumbnailUrl?: string;
+        author?: string;
+        publishDate?: string;
     };
     zIndex: number;
     createdAt: string;
@@ -87,6 +89,8 @@ export interface CreateTileData {
         linkTitle?: string;
         linkDescription?: string;
         thumbnailUrl?: string;
+        author?: string;
+        publishDate?: string;
     };
     zIndex?: number;
 }
