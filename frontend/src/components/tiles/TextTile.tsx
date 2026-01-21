@@ -68,7 +68,7 @@ const TextTile = ({ tile, onUpdate }: TextTileProps) => {
         >
             <ScrollArea className="h-full w-full">
                 {isEditing ? (
-                    <div className="p-1 space-y-2">
+                    <div className="pt-1 pb-3 px-1.5 space-y-1">
                         <input
                             type="text"
                             value={header}
@@ -86,11 +86,31 @@ const TextTile = ({ tile, onUpdate }: TextTileProps) => {
                         />
                     </div>
                 ) : (
-                    <div className="p-1 space-y-2">
+                    <div
+                        className="pt-1 pb-3 px-1.5 space-y-1"
+                        style={{
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                        }}
+                    >
                         {header && (
-                            <h3 className="text-lg font-bold">{header}</h3>
+                            <h3
+                                className="text-lg font-bold"
+                                style={{
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'break-word',
+                                }}
+                            >
+                                {header}
+                            </h3>
                         )}
-                        <p className="whitespace-pre-wrap">
+                        <p
+                            className="whitespace-pre-wrap"
+                            style={{
+                                wordBreak: 'break-word',
+                                overflowWrap: 'break-word',
+                            }}
+                        >
                             {text || 'Click to edit...'}
                         </p>
                     </div>

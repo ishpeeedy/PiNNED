@@ -126,7 +126,7 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
         >
             <ScrollArea className="h-full w-full">
                 {isEditing ? (
-                    <div className="p-3 space-y-2">
+                    <div className="pt-1 pb-3 px-1.5 space-y-1">
                         <input
                             ref={urlInputRef}
                             type="text"
@@ -158,7 +158,13 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                         />
                     </div>
                 ) : (
-                    <div className="p-3 space-y-2">
+                    <div
+                        className="pt-1 pb-3 px-1.5 space-y-1"
+                        style={{
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                        }}
+                    >
                         {thumbnailUrl && (
                             <div className="flex justify-center">
                                 <img
@@ -196,7 +202,7 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                             href={linkUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 text-sm hover:underline inline-flex items-center gap-1"
+                            className="text-blue-600 text-sm hover:underline flex items-center gap-1"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <ExternalLink className="h-3 w-3 flex-shrink-0" />
