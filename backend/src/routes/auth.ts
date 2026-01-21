@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.ts';
+import User from '../models/user.ts';
 import { authenticateToken, AuthRequest } from '../middleware/auth.ts';
 
 const router = express.Router();

@@ -13,7 +13,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { Board } from '@/types';
-import logo from '@/assets/logo.png';
+import logo from '@/assets/logo.svg';
 
 interface NavbarProps {
     board?: Board | null;

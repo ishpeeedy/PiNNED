@@ -68,7 +68,7 @@ const TextTile = ({ tile, onUpdate }: TextTileProps) => {
         >
             <ScrollArea className="h-full w-full">
                 {isEditing ? (
-                    <div className="p-3 space-y-2">
+                    <div className="p-1 space-y-2">
                         <input
                             type="text"
                             value={header}
@@ -86,7 +86,7 @@ const TextTile = ({ tile, onUpdate }: TextTileProps) => {
                         />
                     </div>
                 ) : (
-                    <div className="p-3 space-y-2">
+                    <div className="p-1 space-y-2">
                         {header && (
                             <h3 className="text-lg font-bold">{header}</h3>
                         )}
