@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import type { Tile } from '@/types';
 import { Card } from '@/components/ui/card';
 import axios from 'axios';
@@ -11,13 +11,66 @@ interface ImageTileProps {
 
 const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
     const imageUrl = tile.data?.imageUrl;
+    const [caption, setCaption] = useState(tile.data?.caption || '');
+    const [isEditingCaption, setIsEditingCaption] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const captionInputRef = useRef<HTMLInputElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     console.log('ImageTile rendering:', { imageUrl, data: tile.data });
 
-    const handleImageClick = () => {
+    useEffect(() => {
+        if (isEditingCaption && captionInputRef.current) {
+            captionInputRef.current.focus();
+        }
+    }, [isEditingCaption]);
+
+    const handleSaveCaption = () => {
+        setIsEditingCaption(false);
+        if (onUpdate) {
+            onUpdate({
+                data: {
+                    ...(tile.data || {}),
+                    caption: caption.trim(),
+                },
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (!isEditingCaption) return;
+
+        const handleClickOutside = (e: MouseEvent) => {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(e.target as Node)
+            ) {
+                setIsEditingCaption(false);
+                if (onUpdate) {
+                    onUpdate({
+                        data: {
+                            ...(tile.data || {}),
+                            caption: caption.trim(),
+                        },
+                    });
+                }
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isEditingCaption, caption, onUpdate, tile.data]);
+
+    const handleImageClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
         if (!imageUrl) {
+            // No image: trigger file upload
             fileInputRef.current?.click();
+        } else if (!caption) {
+            // Has image but no caption: enter caption edit mode
+            setIsEditingCaption(true);
         }
     };
 
@@ -73,7 +126,10 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
     };
 
     return (
-        <Card className="h-full w-full overflow-hidden cursor-pointer p-0 gap-0">
+        <Card
+            ref={containerRef}
+            className="h-full w-full overflow-hidden cursor-pointer p-0 gap-0 flex flex-col"
+        >
             <input
                 ref={fileInputRef}
                 type="file"
@@ -82,12 +138,53 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
                 style={{ display: 'none' }}
             />
             {imageUrl ? (
-                <img
-                    src={imageUrl}
-                    alt={tile.data?.header || 'Image'}
-                    className="w-full h-full object-cover"
-                    onClick={handleImageClick}
-                />
+                <>
+                    <img
+                        src={imageUrl}
+                        alt={caption || 'Image'}
+                        className="w-full object-cover flex-shrink-0"
+                        style={{ 
+                            maxHeight: (isEditingCaption || caption) ? 'calc(100% - 32px)' : '100%'
+                        }}
+                        onClick={handleImageClick}
+                    />
+                    {isEditingCaption ? (
+                        <div className="pt-1 pb-3 px-1.5">
+                            <input
+                                ref={captionInputRef}
+                                type="text"
+                                value={caption}
+                                onChange={(e) => setCaption(e.target.value)}
+                                placeholder="Add caption..."
+                                className="w-full text-sm bg-transparent border-b-2 border-black outline-none pb-1"
+                                onClick={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSaveCaption();
+                                    }
+                                }}
+                            />
+                        </div>
+                    ) : (
+                        caption && (
+                            <div
+                                className="pt-1 pb-3 px-1.5"
+                                style={{
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'break-word',
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsEditingCaption(true);
+                                }}
+                            >
+                                <p className="text-sm text-gray-600">
+                                    {caption}
+                                </p>
+                            </div>
+                        )
+                    )}
+                </>
             ) : (
                 <div
                     className="h-full w-full flex items-center justify-center text-gray-400 text-sm hover:bg-gray-50"

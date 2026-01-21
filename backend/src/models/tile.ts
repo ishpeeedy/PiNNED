@@ -20,9 +20,13 @@ export interface ITile extends Document {
         header?: string;
         text?: string;
         imageUrl?: string;
+        caption?: string;
         linkUrl?: string;
+        linkTitle?: string;
         linkDescription?: string;
         thumbnailUrl?: string;
+        author?: string;
+        publishDate?: string;
     };
     zIndex: number;
     createdAt: Date;
