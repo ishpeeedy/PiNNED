@@ -13,6 +13,8 @@ const Board = () => {
     const [tiles, setTiles] = useState<Tile[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDeleteMode, setIsDeleteMode] = useState(false);
+    const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
+    const [lastUsedColor, setLastUsedColor] = useState<string | null>(null);
 
     // Undo/Redo history
     const [history, setHistory] = useState<Tile[][]>([]);
@@ -203,7 +205,8 @@ const Board = () => {
                 position,
                 size: defaultSize,
                 style: {
-                    backgroundColor: board?.settings.tileColor || '#FBBF24',
+                    backgroundColor:
+                        lastUsedColor || board?.settings.tileColor || '#FBBF24',
                     textColor: '#000000',
                 },
                 data: {},
@@ -253,10 +256,38 @@ const Board = () => {
             setTiles(newTiles);
             saveToHistory(newTiles);
             toast.success('Tile deleted');
+            // Clear selection if deleted tile was selected
+            if (selectedTileId === tileId) {
+                setSelectedTileId(null);
+            }
         } catch (error) {
             console.error('Failed to delete tile:', error);
             toast.error('Failed to delete tile');
         }
+    };
+
+    const handleTileClick = (tileId: string) => {
+        // Set the clicked tile as selected
+        setSelectedTileId(tileId);
+    };
+
+    const handleColorChange = (color: string) => {
+        if (!selectedTileId) {
+            toast.error('No tile selected');
+            return;
+        }
+
+        // Remember this color for new tiles
+        setLastUsedColor(color);
+
+        // Update the selected tile's background color
+        handleTileUpdate(selectedTileId, {
+            style: {
+                ...tiles.find((t) => t._id === selectedTileId)?.style,
+                backgroundColor: color,
+            },
+        });
+        toast.success('Color changed');
     };
 
     const handleCreateTileFromDrop = async (
@@ -298,7 +329,8 @@ const Board = () => {
                 position,
                 size: { width: 240, height: 200 },
                 style: {
-                    backgroundColor: board?.settings.tileColor || '#FBBF24',
+                    backgroundColor:
+                        lastUsedColor || board?.settings.tileColor || '#FBBF24',
                     textColor: '#000000',
                 },
                 data: {
@@ -336,6 +368,8 @@ const Board = () => {
                 onRedo={handleRedo}
                 canUndo={historyIndex > 0 && !isSyncing}
                 canRedo={historyIndex < history.length - 1 && !isSyncing}
+                onColorChange={handleColorChange}
+                hasSelectedTile={selectedTileId !== null}
             />
             <Canvas
                 tiles={tiles}
@@ -343,6 +377,7 @@ const Board = () => {
                 isDeleteMode={isDeleteMode}
                 onDeleteTile={handleDeleteTile}
                 onCreateTileFromDrop={handleCreateTileFromDrop}
+                onTileClick={handleTileClick}
             />
         </div>
     );

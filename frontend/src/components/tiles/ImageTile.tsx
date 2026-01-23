@@ -129,6 +129,7 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
         <Card
             ref={containerRef}
             className="h-full w-full overflow-hidden cursor-pointer p-0 gap-0 flex flex-col"
+            style={{ backgroundColor: tile.style.backgroundColor }}
         >
             <input
                 ref={fileInputRef}
@@ -143,13 +144,21 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
                         src={imageUrl}
                         alt={caption || 'Image'}
                         className="w-full object-cover flex-shrink-0"
-                        style={{ 
-                            maxHeight: (isEditingCaption || caption) ? 'calc(100% - 32px)' : '100%'
+                        style={{
+                            maxHeight:
+                                isEditingCaption || caption
+                                    ? 'calc(100% - 32px)'
+                                    : '100%',
                         }}
                         onClick={handleImageClick}
                     />
                     {isEditingCaption ? (
-                        <div className="pt-1 pb-3 px-1.5">
+                        <div
+                            className="pt-1 pb-3 px-1.5"
+                            style={{
+                                backgroundColor: tile.style.backgroundColor,
+                            }}
+                        >
                             <input
                                 ref={captionInputRef}
                                 type="text"
@@ -172,6 +181,7 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
                                 style={{
                                     wordBreak: 'break-word',
                                     overflowWrap: 'break-word',
+                                    backgroundColor: tile.style.backgroundColor,
                                 }}
                                 onClick={(e) => {
                                     e.stopPropagation();

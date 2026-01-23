@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import ColorPalette from './ColorPalette';
 
 interface ToolbarProps {
     onCreateTile?: (type: 'text' | 'image' | 'link') => void;
@@ -25,6 +26,8 @@ interface ToolbarProps {
     onRedo?: () => void;
     canUndo?: boolean;
     canRedo?: boolean;
+    onColorChange?: (color: string) => void;
+    hasSelectedTile?: boolean;
 }
 
 const Toolbar = ({
@@ -36,6 +39,8 @@ const Toolbar = ({
     onRedo,
     canUndo = false,
     canRedo = false,
+    onColorChange,
+    hasSelectedTile = false,
 }: ToolbarProps) => {
     console.log('Toolbar isDeleteMode:', isDeleteMode);
 
@@ -98,6 +103,15 @@ const Toolbar = ({
                     <Link className="w-4 h-4" />
                     Link
                 </Button>
+
+                {/* Separator */}
+                <div className="w-px h-8 bg-black mx-2" />
+
+                {/* Color Palette */}
+                <ColorPalette
+                    onColorChange={(color) => onColorChange?.(color)}
+                    disabled={!hasSelectedTile}
+                />
 
                 {/* Separator */}
                 <div className="w-px h-8 bg-black mx-2" />

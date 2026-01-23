@@ -15,6 +15,7 @@ interface CanvasProps {
         position: { x: number; y: number }
     ) => void;
     zoom?: number;
+    onTileClick?: (tileId: string) => void;
 }
 
 const GRID_SIZE = 40; // Must match Background.tsx grid size
@@ -26,6 +27,7 @@ const Canvas = ({
     onDeleteTile,
     onCreateTileFromDrop,
     zoom = 1,
+    onTileClick,
 }: CanvasProps) => {
     const canvasRef = useRef<HTMLDivElement>(null);
     const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -239,9 +241,13 @@ const Canvas = ({
                                     ? 'delete-glow-border cursor-pointer'
                                     : ''
                             }`}
-                            onClick={() =>
-                                isDeleteMode && onDeleteTile?.(tile._id)
-                            }
+                            onClick={() => {
+                                if (isDeleteMode) {
+                                    onDeleteTile?.(tile._id);
+                                } else {
+                                    onTileClick?.(tile._id);
+                                }
+                            }}
                         >
                             {/* Drag handle bar */}
                             <div className="tile-drag-handle bg-black/5 h-[40px] flex items-center justify-center flex-shrink-0 cursor-default hover:cursor-grab active:cursor-grabbing transition-colors hover:bg-black/8"></div>
