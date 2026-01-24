@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings } from 'lucide-react';
+import { Settings, Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
+import { useThemeStore } from '@/stores/themeStore';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -23,6 +24,7 @@ interface NavbarProps {
 const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
     const navigate = useNavigate();
     const { user, logout } = useAuthStore();
+    const { isDark, toggle } = useThemeStore();
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [editedTitle, setEditedTitle] = useState(board?.title || '');
 
@@ -39,10 +41,10 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
     };
 
     return (
-        <nav className="bg-secondary-background border-b-4 border-black px-6 py-1 flex items-center justify-between gap-4">
+        <nav className="bg-secondary-background border-b-4 border-black px-6 py-1 flex items-center justify-between gap-4 relative z-10">
             {/* Left: Logo */}
             <div
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/')}
                 className="flex items-center cursor-pointer"
             >
                 <img src={logo} alt="PINNED" className="w-auto h-[50px]" />
@@ -103,29 +105,49 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
                 </div>
             )}
 
-            {/* Right: User Menu */}
-            <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
-                    <Avatar>
-                        <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-400 text-white font-bold">
-                            {user?.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">{user?.name}</span>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>
-                        <div className="flex flex-col">
-                            <p className="text-sm font-medium">{user?.name}</p>
-                            <p className="text-xs">{user?.email}</p>
-                        </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
-                        Logout
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Right: Dark Mode + User Menu */}
+            <div className="flex items-center gap-3">
+                {/* Dark Mode Toggle */}
+                <button
+                    onClick={toggle}
+                    className="p-2 hover:bg-black/5 rounded-base transition-colors"
+                    title={
+                        isDark ? 'Switch to light mode' : 'Switch to dark mode'
+                    }
+                >
+                    {isDark ? (
+                        <Sun className="w-5 h-5" />
+                    ) : (
+                        <Moon className="w-5 h-5" />
+                    )}
+                </button>
+
+                {/* User Menu */}
+                <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
+                        <Avatar>
+                            <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-400 text-white font-bold">
+                                {user?.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{user?.name}</span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuLabel>
+                            <div className="flex flex-col">
+                                <p className="text-sm font-medium">
+                                    {user?.name}
+                                </p>
+                                <p className="text-xs">{user?.email}</p>
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleLogout}>
+                            Logout
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </nav>
     );
 };

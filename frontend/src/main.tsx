@@ -12,7 +12,6 @@ import Dashboard from './pages/Dashboard.tsx';
 import Board from './pages/Board.tsx';
 
 import { useAuthStore } from './stores/authStore';
-import Background from './components/Background';
 
 function App() {
     const { isAuthenticated, checkAuth } = useAuthStore();
@@ -22,7 +21,7 @@ function App() {
     }, [checkAuth]);
 
     return (
-        <Background>
+        <>
             <Toaster position="bottom-right" />
             <Routes>
                 <Route path="/" element={<Home />} />
@@ -64,7 +63,7 @@ function App() {
                 />
                 <Route path="*" element={<Home />} />
             </Routes>
-        </Background>
+        </>
     );
 }
 

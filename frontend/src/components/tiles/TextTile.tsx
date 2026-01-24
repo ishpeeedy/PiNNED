@@ -74,14 +74,14 @@ const TextTile = ({ tile, onUpdate }: TextTileProps) => {
                             value={header}
                             onChange={(e) => setHeader(e.target.value)}
                             placeholder="Header (optional)"
-                            className="w-full text-lg font-bold bg-transparent border-b-2 border-black outline-none pb-1"
+                            className="w-full text-lg font-bold text-black bg-transparent border-b-2 border-black outline-none pb-1"
                         />
                         <textarea
                             ref={textareaRef}
                             value={text}
                             onChange={(e) => setText(e.target.value)}
                             placeholder="Type your text here..."
-                            className="w-full bg-transparent outline-none resize-none min-h-[100px]"
+                            className="w-full text-black bg-transparent outline-none resize-none min-h-[100px]"
                             rows={8}
                         />
                     </div>
@@ -95,7 +95,7 @@ const TextTile = ({ tile, onUpdate }: TextTileProps) => {
                     >
                         {header && (
                             <h3
-                                className="text-lg font-bold"
+                                className="text-lg font-bold text-black"
                                 style={{
                                     wordBreak: 'break-word',
                                     overflowWrap: 'break-word',
@@ -105,7 +105,7 @@ const TextTile = ({ tile, onUpdate }: TextTileProps) => {
                             </h3>
                         )}
                         <p
-                            className="whitespace-pre-wrap"
+                            className="whitespace-pre-wrap text-black"
                             style={{
                                 wordBreak: 'break-word',
                                 overflowWrap: 'break-word',

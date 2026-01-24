@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { ExternalLink } from 'lucide-react';
 import type { Tile } from '@/types';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -133,10 +132,10 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                             value={linkUrl}
                             onChange={(e) => setLinkUrl(e.target.value)}
                             placeholder="https://example.com"
-                            className="w-full text-sm bg-transparent border-b-2 border-black outline-none pb-1"
+                            className="w-full text-sm text-black bg-transparent border-b-2 border-black outline-none pb-1"
                         />
                         {isLoadingMetadata && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-foreground/60">
                                 Loading metadata...
                             </p>
                         )}
@@ -145,14 +144,14 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                             value={linkTitle}
                             onChange={(e) => setLinkTitle(e.target.value)}
                             placeholder="Link title (optional)"
-                            className="w-full text-lg font-bold bg-transparent border-b-2 border-black outline-none pb-1"
+                            className="w-full text-lg font-bold text-black bg-transparent border-b-2 border-black outline-none pb-1"
                             disabled={isLoadingMetadata}
                         />
                         <textarea
                             value={linkDescription}
                             onChange={(e) => setLinkDescription(e.target.value)}
                             placeholder="Description (optional)"
-                            className="w-full bg-transparent outline-none resize-none min-h-[100px]"
+                            className="w-full text-black bg-transparent outline-none resize-none min-h-[100px]"
                             rows={3}
                             disabled={isLoadingMetadata}
                         />
@@ -178,10 +177,10 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                             </div>
                         )}
                         {linkTitle && (
-                            <h3 className="text-lg font-bold">{linkTitle}</h3>
+                            <h3 className="text-lg font-bold text-black">{linkTitle}</h3>
                         )}
                         {(author || publishDate) && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-foreground/60">
                                 {author && <span>by {author}</span>}
                                 {author && publishDate && <span> • </span>}
                                 {publishDate && (
@@ -194,7 +193,7 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                             </p>
                         )}
                         {linkDescription && (
-                            <p className="whitespace-pre-wrap">
+                            <p className="whitespace-pre-wrap text-black">
                                 {linkDescription}
                             </p>
                         )}
@@ -202,13 +201,10 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                             href={linkUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 text-sm hover:underline flex items-center gap-1"
+                            className="text-blue-600 text-sm hover:underline break-all"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                            <span className="break-all">
-                                {linkUrl || 'Click to add link...'}
-                            </span>
+                            {linkUrl || 'Click to add link...'}
                         </a>
                     </div>
                 )}

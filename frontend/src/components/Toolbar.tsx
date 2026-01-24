@@ -19,7 +19,6 @@ import ColorPalette from './ColorPalette';
 
 interface ToolbarProps {
     onCreateTile?: (type: 'text' | 'image' | 'link') => void;
-    saveStatus?: 'saved' | 'saving' | 'error';
     isDeleteMode?: boolean;
     onToggleDelete?: () => void;
     onUndo?: () => void;
@@ -32,7 +31,6 @@ interface ToolbarProps {
 
 const Toolbar = ({
     onCreateTile,
-    saveStatus = 'saved',
     isDeleteMode = false,
     onToggleDelete,
     onUndo,
@@ -52,28 +50,8 @@ const Toolbar = ({
         onCreateTile?.(type);
     };
 
-    const statusConfig = {
-        saved: {
-            icon: Check,
-            text: 'Saved',
-            color: 'text-gray-500',
-        },
-        saving: {
-            icon: Loader2,
-            text: 'Saving...',
-            color: 'text-gray-500',
-        },
-        error: {
-            icon: AlertCircle,
-            text: 'Error',
-            color: 'text-gray-500',
-        },
-    };
-
-    const StatusIcon = statusConfig[saveStatus].icon;
-
     return (
-        <div className="bg-secondary-background border-b-4 border-black px-6 py-3 flex items-center gap-4">
+        <div className="bg-secondary-background border-b-4 border-black px-6 py-3 flex items-center gap-4 relative z-10">
             {/* Left: Create Tile Buttons */}
             <div className="flex items-center gap-2">
                 <Button
@@ -148,7 +126,7 @@ const Toolbar = ({
             {/* Center: Search */}
             <div className="flex-1 flex justify-center">
                 <div className="relative max-w-md w-full">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-foreground/60" />
                     <Input
                         type="text"
                         placeholder="Search tiles..."
@@ -160,19 +138,6 @@ const Toolbar = ({
 
             {/* Right: Save Status + Zoom Controls */}
             <div className="flex items-center gap-4">
-                {/* Save Status */}
-                <div
-                    className={`flex items-center gap-1.5 text-sm font-medium ${statusConfig[saveStatus].color}`}
-                >
-                    <StatusIcon
-                        className={`w-4 h-4 ${saveStatus === 'saving' ? 'animate-spin' : ''}`}
-                    />
-                    <span>{statusConfig[saveStatus].text}</span>
-                </div>
-
-                {/* Separator */}
-                <div className="w-px h-8 bg-black" />
-
                 {/* Zoom Controls */}
                 <div className="flex items-center gap-2">
                     <Button

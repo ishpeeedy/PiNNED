@@ -158,6 +158,15 @@ const Canvas = ({
                     backgroundPosition: `${snappedPan.x}px ${snappedPan.y}px`,
                 }}
             />
+            {/* Dark mode grid overlay */}
+            <div
+                className="absolute inset-0 pointer-events-none dark:block hidden"
+                style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath d='M0 0h40v40H0z' fill='none'/%3E%3Cpath d='M0 0h1v40H0zM0 0h40v1H0z' fill='rgba(255,255,255,0.1)'/%3E%3C/svg%3E")`,
+                    backgroundSize: '40px 40px',
+                    backgroundPosition: `${snappedPan.x}px ${snappedPan.y}px`,
+                }}
+            />
 
             {/* Tiles container */}
             <div

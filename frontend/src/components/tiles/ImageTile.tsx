@@ -165,7 +165,7 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
                                 value={caption}
                                 onChange={(e) => setCaption(e.target.value)}
                                 placeholder="Add caption..."
-                                className="w-full text-sm bg-transparent border-b-2 border-black outline-none pb-1"
+                                className="w-full text-sm text-black bg-transparent border-b-2 border-black outline-none pb-1"
                                 onClick={(e) => e.stopPropagation()}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
@@ -188,7 +188,7 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
                                     setIsEditingCaption(true);
                                 }}
                             >
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-black">
                                     {caption}
                                 </p>
                             </div>
@@ -197,7 +197,7 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
                 </>
             ) : (
                 <div
-                    className="h-full w-full flex items-center justify-center text-gray-400 text-sm hover:bg-gray-50"
+                    className="h-full w-full flex items-center justify-center text-foreground/40 text-sm hover:bg-foreground/5"
                     onClick={handleImageClick}
                 >
                     Click to add image
