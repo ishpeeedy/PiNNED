@@ -36,6 +36,7 @@ export interface Tile {
         header?: string;
         text?: string;
         imageUrl?: string;
+        caption?: string;
         linkUrl?: string;
         linkTitle?: string;
         linkDescription?: string;
