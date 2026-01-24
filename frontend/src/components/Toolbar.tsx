@@ -7,9 +7,6 @@ import {
     Search,
     ZoomIn,
     ZoomOut,
-    Check,
-    Loader2,
-    AlertCircle,
     Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

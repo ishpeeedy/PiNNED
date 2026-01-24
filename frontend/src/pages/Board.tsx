@@ -360,7 +360,6 @@ const Board = () => {
         <div className="flex flex-col h-screen">
             <Navbar board={board} onBoardUpdate={handleBoardUpdate} />
             <Toolbar
-                saveStatus="saved"
                 onCreateTile={handleCreateTile}
                 isDeleteMode={isDeleteMode}
                 onToggleDelete={handleToggleDelete}

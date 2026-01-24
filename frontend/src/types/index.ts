@@ -30,7 +30,7 @@ export interface Tile {
     };
     style: {
         backgroundColor: string;
-        textColor: string;
+        textColor?: string;
     };
     data: {
         header?: string;
@@ -85,6 +85,7 @@ export interface CreateTileData {
         header?: string;
         text?: string;
         imageUrl?: string;
+        caption?: string;
         linkUrl?: string;
         linkTitle?: string;
         linkDescription?: string;
