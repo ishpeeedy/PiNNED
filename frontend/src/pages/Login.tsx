@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authAPI } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
-import Footer from '@/components/footer';
+import Footer from '@/components/Footer';
 
 export default function Login() {
     const [email, setEmail] = useState('');
