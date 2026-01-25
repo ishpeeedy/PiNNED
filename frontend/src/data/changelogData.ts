@@ -1,5 +1,17 @@
 export const changelogData = [
     {
+        version: '1.0',
+        date: 'Jan 26, 2026',
+        changes: [
+            'Redesigned landing page with GSAP scroll-driven zoom animation — hero image fills the screen and shrinks into a canvas tile on scroll',
+            'Added mock tile layout around the hero canvas showcasing Airbnb link previews, image tiles, and text tiles',
+            'Added Navbar and Toolbar overlaid behind the hero image, revealed as the canvas shrinks',
+            'Added Apple-style feature bento section with spatial canvas, link previews, image upload, undo history, and color palette cells',
+            'Added scrolling marquee banner between the hero and feature sections',
+            'Added template board carousel with looping autoplay using Embla Carousel',
+        ],
+    },
+    {
         version: '0.9',
         date: 'Jan 25, 2026',
         changes: [
