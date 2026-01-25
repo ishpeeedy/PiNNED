@@ -173,7 +173,7 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen flex-1">
             <Navbar />
 
             {/* Main Content */}
