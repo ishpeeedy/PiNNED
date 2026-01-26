@@ -10,7 +10,6 @@ import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import Changelog from './pages/Changelog.tsx';
-import Landing from './pages/Landing.tsx';
 import Board from './pages/Board.tsx';
 
 import { useAuthStore } from './stores/authStore';
@@ -57,7 +56,6 @@ function App() {
                         )
                     }
                 />
-                <Route path="/landing" element={<Landing />} />
                 <Route path="/changelog" element={<Changelog />} />
                 <Route
                     path="/board/:id"

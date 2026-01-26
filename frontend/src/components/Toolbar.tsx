@@ -48,7 +48,7 @@ const Toolbar = ({
     };
 
     return (
-        <div className="bg-secondary-background border-b-4 border-black px-6 py-3 flex items-center gap-4 relative z-10">
+        <div className="bg-secondary-background border-b-4 border-black px-6 h-[60px] flex items-center gap-4 relative z-10">
             {/* Left: Create Tile Buttons */}
             <div className="flex items-center gap-2">
                 <Button

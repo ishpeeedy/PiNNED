@@ -41,10 +41,10 @@ export default function Login() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen grid-pattern">
+        <div className="flex flex-col min-h-screen">
             <Navbar />
-            <main className="flex-1 flex items-center justify-center">
-                <Card className="w-full max-w-sm shadow-shadow">
+            <main className="flex-1 flex items-center justify-center grid-pattern">
+                <Card className="mt-[-20px] mr-[14px] w-[400px] shadow-shadow">
                     <CardHeader>
                         <CardTitle>Login to PINNED</CardTitle>
                         <CardDescription>

@@ -1,243 +1,589 @@
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useCallback } from 'react';
+import gsap from 'gsap';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import landingImg from '@/assets/landing1.jpg';
+import Toolbar from '@/components/Toolbar';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import Marquee from '@/components/ui/marquee';
+import {
+    Link2,
+    ImageIcon,
+    Undo2,
+    Palette,
+    ChevronLeft,
+    ChevronRight,
+} from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
+import { carouselBoards } from '@/data/carouselData';
 
-export default function Home() {
-    const navigate = useNavigate();
+gsap.registerPlugin(ScrollTrigger);
+
+// Static tile mockups — styled to match real tiles (Card: border-2 border-border rounded-base)
+const TileShell = ({
+    children,
+    className = '',
+    style,
+}: {
+    children: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+}) => (
+    <div
+        className={`bg-white border-2 border-black rounded-base overflow-hidden ${className}`}
+        style={style}
+    >
+        {children}
+    </div>
+);
+
+const MockTextTile = ({
+    title,
+    body,
+    className,
+    style,
+}: {
+    title: string;
+    body: string;
+    className?: string;
+    style?: React.CSSProperties;
+}) => (
+    <TileShell
+        className={`p-2 flex flex-col h-[120px] gap-2 ${className ?? 'w-[200px]'}`}
+        style={style}
+    >
+        <p className="font-bold text-sm text-black">{title}</p>
+        <p className="text-xs text-black/70 leading-relaxed whitespace-pre-line">
+            {body}
+        </p>
+    </TileShell>
+);
+
+const MockImageTile = ({
+    src,
+    caption,
+    small,
+}: {
+    src: string;
+    caption?: string;
+    small?: boolean;
+}) => (
+    <TileShell className={small ? 'w-[200px]' : 'w-[280px]'}>
+        <img
+            src={src}
+            alt=""
+            className={`w-full object-cover ${small ? 'h-[150px]' : 'h-[190px]'}`}
+        />
+        {caption && <p className="text-xs text-black px-3 py-2">{caption}</p>}
+    </TileShell>
+);
+
+const MockLinkTile = ({
+    url,
+    title,
+    description,
+    favicon,
+    thumbnail,
+}: {
+    url: string;
+    title: string;
+    description: string;
+    favicon?: string;
+    thumbnail?: string;
+}) => (
+    <TileShell className="w-[240px] flex flex-col gap-0 h-[280px]">
+        {thumbnail && (
+            <img
+                src={thumbnail}
+                alt=""
+                className="w-full h-[140px] object-cover"
+            />
+        )}
+        <div className="p-3 flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+                {favicon && <img src={favicon} alt="" className="w-4 h-4" />}
+                <p className="text-xs text-black/50 truncate">{url}</p>
+            </div>
+            <p className="font-bold text-sm text-black leading-snug">{title}</p>
+            <p className="text-xs text-black/60 leading-relaxed line-clamp-2">
+                {description}
+            </p>
+        </div>
+    </TileShell>
+);
+
+const TemplateCarousel = () => {
+    const [emblaRef, emblaApi] = useEmblaCarousel(
+        { loop: true, align: 'start', slidesToScroll: 1 },
+        [Autoplay({ delay: 3000, stopOnInteraction: true })]
+    );
+
+    const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+    const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
     return (
-        <div className="flex flex-col min-h-screen bg-background">
-            <Navbar />
+        <div className="flex flex-col gap-10">
+            <div className="px-6 flex items-end justify-between">
+                <div className="px-85 flex flex-col gap-2">
+                    <p className="text-2xl font-black">
+                        Pick a board. Make it yours.
+                    </p>
+                </div>
+                <div className="pr-85 flex gap-2">
+                    <Button variant="neutral" size="icon" onClick={scrollPrev}>
+                        <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <Button variant="neutral" size="icon" onClick={scrollNext}>
+                        <ChevronRight className="w-4 h-4" />
+                    </Button>
+                </div>
+            </div>
 
-            <main className="flex-1">
-                {/* Hero Section */}
-                <section className="hero-section py-20 px-6 text-center isometric-dots">
-                    <div className="max-w-4xl mx-auto space-y-6">
-                        <h1 className="text-6xl font-black text-foreground">
-                            Pin Your Ideas. Organize Your World.
-                        </h1>
-                        <p className="text-2xl text-foreground/80">
-                            A visual workspace where your thoughts, links, and
-                            images come together on an infinite canvas. No
-                            clutter. No limits. Just pure creative freedom.
-                        </p>
-                        <div className="flex gap-4 justify-center pt-6">
-                            <Button
-                                onClick={() => navigate('/register')}
-                                className="text-lg px-8 py-6"
-                            >
-                                Get Started Free
-                            </Button>
-                            <Button
-                                onClick={() => navigate('/demo')}
-                                className="text-lg px-8 py-6"
-                            >
-                                See Demo
-                            </Button>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Features Section */}
-                <section className="features-section py-20 px-6 ">
-                    <div className="max-w-6xl mx-auto">
-                        <h2 className="text-4xl font-black text-center mb-12 text-foreground">
-                            Why PINNED?
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <Card className="p-6 shadow-shadow">
-                                <h3 className="text-2xl font-bold mb-3">
-                                    Infinite Canvas
-                                </h3>
-                                <p className="text-foreground/80">
-                                    Drag, drop, and organize anywhere. Your
-                                    board grows with your ideas—up, down, left,
-                                    right. No boundaries.
-                                </p>
-                            </Card>
-
-                            <Card className="p-6 shadow-shadow">
-                                <h3 className="text-2xl font-bold mb-3">
-                                    Multiple Tile Types
-                                </h3>
-                                <p className="text-foreground/80">
-                                    Text notes, images, links with previews.
-                                    Everything you need in one place.
-                                </p>
-                            </Card>
-
-                            <Card className="p-6 shadow-shadow">
-                                <h3 className="text-2xl font-bold mb-3">
-                                    Effortless Organization
-                                </h3>
-                                <p className="text-foreground/80">
-                                    Snap-to-grid keeps things tidy. Zoom in for
-                                    details, zoom out for the big picture.
-                                </p>
-                            </Card>
-
-                            <Card className="p-6 shadow-shadow">
-                                <h3 className="text-2xl font-bold mb-3">
-                                    Undo Everything
-                                </h3>
-                                <p className="text-foreground/80">
-                                    Made a mistake? No problem. Full undo/redo
-                                    history has your back.
-                                </p>
-                            </Card>
-
-                            <Card className="p-6 shadow-shadow">
-                                <h3 className="text-2xl font-bold mb-3">
-                                    Beautiful Design
-                                </h3>
-                                <p className="text-foreground/80">
-                                    Bold, colorful, and unapologetically simple.
-                                    Neobrutalist design that gets out of your
-                                    way.
-                                </p>
-                            </Card>
-                        </div>
-                    </div>
-                </section>
-
-                {/* How It Works */}
-                <section className="how-it-works-section py-20 px-6 grid-pattern-tight">
-                    <div className="max-w-4xl mx-auto">
-                        <h2 className="text-4xl font-black text-center mb-12 text-foreground">
-                            How It Works
-                        </h2>
-                        <div className="space-y-8">
-                            <div className="flex items-start gap-4">
-                                <div className="text-3xl font-black text-foreground">
-                                    1.
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold mb-2">
-                                        Create a board
-                                    </h3>
-                                    <p className="text-foreground/80">
-                                        Start with a blank canvas, ready for
-                                        your ideas.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-4">
-                                <div className="text-3xl font-black text-foreground">
-                                    2.
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold mb-2">
-                                        Add tiles (text, images, links)
-                                    </h3>
-                                    <p className="text-foreground/80">
-                                        Choose from multiple tile types to
-                                        capture your content.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-4">
-                                <div className="text-3xl font-black text-foreground">
-                                    3.
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold mb-2">
-                                        Drag, resize, and organize
-                                    </h3>
-                                    <p className="text-foreground/80">
-                                        Move things around until they feel just
-                                        right.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-4">
-                                <div className="text-3xl font-black text-foreground">
-                                    4.
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold mb-2">
-                                        Your board auto-saves. Done.
-                                    </h3>
-                                    <p className="text-foreground/80">
-                                        Never worry about losing your work
-                                        again.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Use Cases */}
-                <section className="use-cases-section py-20 px-6 ">
-                    <div className="max-w-6xl mx-auto">
-                        <h2 className="text-4xl font-black text-center mb-12 text-foreground">
-                            Who Uses PINNED?
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Card className="p-6 shadow-shadow">
-                                <h3 className="text-2xl font-bold mb-3">
-                                    For Students
-                                </h3>
-                                <p className="text-foreground/80">
-                                    Research boards, study notes, project
-                                    planning
-                                </p>
-                            </Card>
-
-                            <Card className="p-6 shadow-shadow">
-                                <h3 className="text-2xl font-bold mb-3">
-                                    For Designers
-                                </h3>
-                                <p className="text-foreground/80">
-                                    Mood boards, inspiration collection, client
-                                    feedback
-                                </p>
-                            </Card>
-
-                            <Card className="p-6 shadow-shadow">
-                                <h3 className="text-2xl font-bold mb-3">
-                                    For Writers
-                                </h3>
-                                <p className="text-foreground/80">
-                                    Story outlines, character notes, reference
-                                    materials
-                                </p>
-                            </Card>
-
-                            <Card className="p-6 shadow-shadow">
-                                <h3 className="text-2xl font-bold mb-3">
-                                    For Everyone
-                                </h3>
-                                <p className="text-foreground/80">
-                                    Task lists, recipes, travel plans, literally
-                                    anything
-                                </p>
-                            </Card>
-                        </div>
-                    </div>
-                </section>
-
-                {/* CTA Section */}
-                <section className="cta-section py-20 px-6 text-center grid-pattern-tight">
-                    <div className="max-w-2xl mx-auto space-y-6">
-                        <h2 className="text-4xl font-black text-foreground">
-                            Ready to organize your world?
-                        </h2>
-                        <Button
-                            onClick={() => navigate('/register')}
-                            className="text-lg px-8 py-6"
+            <div className="overflow-hidden w-full" ref={emblaRef}>
+                <div className="flex">
+                    {carouselBoards.map((board, i) => (
+                        <div
+                            key={board.title}
+                            className={`shrink-0 w-[320px] min-w-0 ${i === 0 ? 'pl-6' : 'pl-4'}`}
                         >
-                            Get Started Free
-                        </Button>
-                    </div>
-                </section>
-            </main>
-            <Footer />
+                            <Card className="overflow-hidden gap-0 py-0 w-full dark:bg-secondary-background">
+                                <img
+                                    src={board.img}
+                                    alt={board.title}
+                                    className="w-full h-[240px] object-cover"
+                                />
+                                <CardContent className="p-4 flex flex-col gap-3 flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xl">
+                                            {board.emoji}
+                                        </span>
+                                        <p className="font-black text-sm">
+                                            {board.title}
+                                        </p>
+                                    </div>
+                                    <p className="text-xs text-foreground/60 leading-relaxed flex-1">
+                                        {board.description}
+                                    </p>
+                                    <Button
+                                        asChild
+                                        size="sm"
+                                        className="w-full"
+                                    >
+                                        <a href="/register">Try now!</a>
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
+    );
+};
+
+export default function Landing() {
+    const sectionRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const imgRef = useRef<HTMLImageElement>(null);
+    const gridRef = useRef<HTMLDivElement>(null);
+    const bentoRef = useRef<HTMLElement>(null);
+
+    useEffect(() => {
+        const section = sectionRef.current;
+        const container = containerRef.current;
+        const img = imgRef.current;
+        const grid = gridRef.current;
+        if (!section || !container || !img || !grid) return;
+
+        // Chrome (Navbar + Toolbar) is fixed at 60px each = 120px = 3 grid cells
+        grid.style.top = '120px';
+
+        ScrollTrigger.normalizeScroll(true);
+
+        const tiles = section.querySelectorAll('.mock-tile');
+
+        // Calculate how much to scale the 320×240 container to fill the viewport
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const startScale = Math.max(vw / 320, vh / 240);
+
+        // Set initial scale via GSAP so it fills the screen
+        gsap.set(container, {
+            scale: startScale,
+            willChange: 'transform',
+        });
+
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: section,
+                start: 'top top',
+                end: '+=250%',
+                scrub: 0.5,
+                pin: true,
+                anticipatePin: 1,
+            },
+        });
+
+        // Phase 1 (0 → 0.5): scale down to tile size + grid fade in
+        tl.to(
+            container,
+            {
+                scale: 1,
+                borderRadius: '4px',
+                ease: 'none',
+            },
+            0
+        )
+            .to(img, { scale: 1.01, ease: 'none' }, 0)
+            .to(grid, { opacity: 1, ease: 'none' }, 0);
+
+        // Phase 2 (0.5 → 1): surrounding tiles stagger in
+        tl.fromTo(
+            tiles,
+            { opacity: 0, scale: 0.92 },
+            { opacity: 1, scale: 1, stagger: 0.08, ease: 'none' },
+            0.5
+        );
+
+        // Bento section: simple stagger reveal on scroll
+        if (bentoRef.current) {
+            gsap.fromTo(
+                bentoRef.current.querySelectorAll('.bento-cell'),
+                { y: 40, opacity: 0 },
+                {
+                    y: 0,
+                    opacity: 1,
+                    stagger: 0.1,
+                    ease: 'power2.out',
+                    scrollTrigger: {
+                        trigger: bentoRef.current,
+                        start: 'top 78%',
+                        toggleActions: 'play none none none',
+                    },
+                }
+            );
+        }
+
+        return () => {
+            ScrollTrigger.getAll().forEach((t) => t.kill());
+        };
+    }, []);
+
+    return (
+        <>
+            <div
+                ref={sectionRef}
+                className="relative w-full h-screen flex items-center justify-center bg-background overflow-hidden"
+            >
+                {/* Navbar + toolbar sit behind the fullscreen image (z-[5] < z-10) */}
+                <div className="absolute top-0 left-0 right-0 z-[5]">
+                    <Navbar />
+                    <Toolbar />
+                </div>
+
+                {/* Grid fades in — starts below the chrome */}
+                <div
+                    ref={gridRef}
+                    className="absolute inset-x-0 bottom-0 grid-pattern opacity-0"
+                />
+
+                {/* Airbnb listing — top left */}
+                <div
+                    className="mock-tile opacity-0 absolute"
+                    style={{ top: '120px', left: '40px' }}
+                >
+                    <MockLinkTile
+                        url="airbnb.com · Minato-ku, Tokyo"
+                        title="Hotel in Minato-ku · ★4.69 · 1 bedroom"
+                        description="MANGA Design · 1 bed · Free simple breakfast · 4 station access"
+                        favicon="https://a0.muscache.com/airbnb/static/icons/android-icon-192x192-c0465f9f0380893768972a31a614b670.png"
+                        thumbnail="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_400,f_auto,q_auto/v1771518160/IMP_Resources/2b0f280b-42be-4cac-9eae-9c3281a256c2_yspeiz.avif"
+                    />
+                </div>
+
+                {/* Pros/cons text tile — near Airbnb */}
+                <div
+                    className="mock-tile opacity-0 absolute"
+                    style={{
+                        top: '160px',
+                        left: '280px',
+                    }}
+                >
+                    <MockTextTile
+                        title="Minato-ku Airbnb"
+                        body={
+                            '✅ Manga theme — unique stay\n✅ Free breakfast included\n✅ 4 stations nearby\n❌ Pricey for the size'
+                        }
+                    />
+                </div>
+
+                {/* Yasuo Building — top right */}
+                <div
+                    className="mock-tile opacity-0 absolute"
+                    style={{ top: '120px', right: '120px' }}
+                >
+                    <MockImageTile
+                        src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518162/IMP_Resources/pexels-photo-5544961_bbsgqw.jpg"
+                        caption="Nakagin Capsule Tower · Shimbashi · Brutalist icon, 1972"
+                    />
+                </div>
+
+                {/* Must Visit header tile — above the bottom-right pair */}
+                <div
+                    className="mock-tile opacity-0 absolute"
+                    style={{
+                        top: '360px',
+                        right: '80px',
+                        zIndex: 2,
+                    }}
+                >
+                    <MockTextTile
+                        className="w-[400px]"
+                        title="Must Visit! 📍"
+                        body={
+                            "Two architectural icons, 15 min apart — the National Art Center's rippling glass facade (Kurokawa, 2007) and Fuji TV's titanium sphere floating above Odaiba (Tange, 1997).\nBudget at least half a day to visit them both."
+                        }
+                    />
+                </div>
+                <div
+                    className="mock-tile opacity-0 absolute"
+                    style={{
+                        top: '560px',
+                        right: '560px',
+                        zIndex: 2,
+                    }}
+                >
+                    <MockTextTile
+                        className="w-[400px] h-[80px]"
+                        title="Japan Trip Ideas 🌸"
+                        body={
+                            'Cherry blossoms in Kyoto · Ramen in Sapporo · Capsule hotel in Tokyo · Ribbon Chapel · Fuji TV HQ · National Art Center · Nakagin Capsule Tower \n Possibly some trekking as well'
+                        }
+                        style={{
+                            backgroundColor: 'var(--main)',
+                            borderColor: '#000000',
+                        }}
+                    />
+                </div>
+
+                {/* National Art Center — bottom right pair, left tile */}
+                <div
+                    className="mock-tile opacity-0 absolute"
+                    style={{
+                        top: '480px',
+                        right: '40px',
+                        zIndex: 2,
+                    }}
+                >
+                    <MockImageTile
+                        small
+                        src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518161/IMP_Resources/photo_2023-12-14_13-.jpg_jhs6wa.webp"
+                        caption="National Art Center · Roppongi · Kisho Kurokawa, 2007"
+                    />
+                </div>
+
+                {/* Ribbon Chapel — bottom left */}
+                <div
+                    className="mock-tile opacity-0 absolute"
+                    style={{ top: '400px', left: '8%' }}
+                >
+                    <MockImageTile
+                        src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518161/IMP_Resources/Bella-vista201512-02_nmlhb4.jpg"
+                        caption="Ribbon Chapel · Onomichi · Two intertwining staircases, no columns"
+                    />
+                </div>
+
+                {/* Fuji TV HQ — bottom right pair, right tile */}
+                <div
+                    className="mock-tile opacity-0 absolute"
+                    style={{ top: '480px', right: '240px', zIndex: 2 }}
+                >
+                    <MockImageTile
+                        small
+                        src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518161/IMP_Resources/2018_FCG_Headquarters_Building_2_tcg9wi.jpg"
+                        caption="Fuji TV HQ · Odaiba · Kenzo Tange, 1997"
+                    />
+                </div>
+
+                {/* Center image tile — zooms out from fullscreen */}
+                <div
+                    ref={containerRef}
+                    className="absolute overflow-hidden z-10 border-2 border-black"
+                    style={{
+                        top: '240px',
+                        left: '560px',
+                        width: '400px',
+                        height: '320px',
+                        transformOrigin: 'center center',
+                    }}
+                >
+                    <img
+                        ref={imgRef}
+                        src={landingImg}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        style={{
+                            transform: 'scale(1)',
+                            transformOrigin: 'center center',
+                            willChange: 'transform',
+                            backfaceVisibility: 'hidden',
+                        }}
+                    />
+                </div>
+            </div>
+
+            <Marquee
+                items={[
+                    'Drag & Drop Images',
+                    '·',
+                    'Link Metadata Fetching',
+                    '·',
+                    'Image uploads',
+                    '·',
+                    'Undo History',
+                    '·',
+                    'Color Palettes',
+                    '·',
+                    'Auto-save',
+                    '·',
+                    'Easy Resize',
+                    '·',
+                    'Infinite canvas',
+                    '·',
+                ]}
+            />
+
+            {/* Bento section */}
+            <section
+                ref={bentoRef}
+                className="relative w-full py-10 px-5 bg-background overflow-hidden isometric-dots"
+            >
+                <div className="max-w-4xl mx-auto flex flex-col gap-1">
+                    <p className="text-xs font-bold uppercase tracking-widest text-foreground/50">
+                        everything you need
+                    </p>
+
+                    <div
+                        className="grid grid-cols-3 gap-3"
+                        style={{ gridTemplateRows: '260px 180px' }}
+                    >
+                        {/* Big cell — spatial canvas */}
+                        <div className="bento-cell col-start-1 col-end-3 border-2 border-black rounded-base bg-black text-white p-8 flex flex-col justify-between overflow-hidden relative">
+                            {/* Mini canvas mockup */}
+                            <div
+                                className="absolute inset-0 opacity-10"
+                                style={{
+                                    backgroundImage:
+                                        'linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)',
+                                    backgroundSize: '32px 32px',
+                                }}
+                            />
+                            <div className="relative flex gap-3">
+                                <div className="w-24 h-16 rounded border-2 border-white/40 bg-white/10" />
+                                <div className="w-16 h-20 rounded border-2 border-white/40 bg-white/10 mt-4" />
+                                <div className="w-20 h-14 rounded border-2 border-white/40 bg-white/10 mt-1" />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-black leading-tight">
+                                    Your ideas,
+                                    <br />
+                                    laid out how
+                                    <br />
+                                    you think.
+                                </p>
+                                <p className="text-sm text-white/50 mt-2">
+                                    Drag. Drop. Snap to grid.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Link previews */}
+                        <div className="bento-cell col-start-3 col-end-4 border-2 border-black rounded-base bg-[#fff7ed] p-6 flex flex-col justify-between">
+                            <Link2
+                                className="w-7 h-7 text-black"
+                                strokeWidth={2.5}
+                            />
+                            <div>
+                                <p className="font-black text-lg text-black leading-tight">
+                                    Paste a URL.
+                                    <br />
+                                    Get a preview.
+                                </p>
+                                <p className="text-xs text-black/50 mt-1">
+                                    Title, description, thumbnail —
+                                    auto-fetched.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Image upload */}
+                        <div className="bento-cell col-start-1 col-end-2 border-2 border-black rounded-base bg-[#e0f2fe] p-6 flex flex-col justify-between">
+                            <ImageIcon
+                                className="w-7 h-7 text-black"
+                                strokeWidth={2.5}
+                            />
+                            <div>
+                                <p className="font-black text-lg text-black leading-tight">
+                                    Drag images
+                                    <br />
+                                    right in.
+                                </p>
+                                <p className="text-xs text-black/50 mt-1">
+                                    From desktop or upload. Stored on
+                                    Cloudinary.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Undo + autosave */}
+                        <div className="bento-cell col-start-2 col-end-3 border-2 border-black rounded-base bg-[#dcfce7] p-6 flex flex-col justify-between">
+                            <Undo2
+                                className="w-7 h-7 text-black"
+                                strokeWidth={2.5}
+                            />
+                            <div>
+                                <p className="font-black text-lg text-black leading-tight">
+                                    Auto-saves.
+                                    <br />
+                                    Ctrl+Z always
+                                    <br />
+                                    works.
+                                </p>
+                                <p className="text-xs text-black/50 mt-1">
+                                    Full undo history, zero manual saving.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Color */}
+                        <div className="bento-cell col-start-3 col-end-4 border-2 border-black rounded-base bg-[#fae8ff] p-6 flex flex-col justify-between">
+                            <Palette
+                                className="w-7 h-7 text-black"
+                                strokeWidth={2.5}
+                            />
+                            <div>
+                                <p className="font-black text-lg text-black leading-tight">
+                                    Your palette,
+                                    <br />
+                                    your rules.
+                                </p>
+                                <p className="text-xs text-black/50 mt-1">
+                                    Color every tile however you want.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Carousel section */}
+            <section className="relative w-full py-10 overflow-hidden bg-secondary-background grid-pattern">
+                <TemplateCarousel />
+            </section>
+            <Footer />
+        </>
     );
 }

@@ -173,100 +173,104 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="min-h-screen flex-1">
+        <div className="min-h-screen flex flex-col">
             <Navbar />
 
-            {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
-                {loading ? (
-                    <div className="flex items-center justify-center h-64">
-                        <p className="text-xl">Loading boards...</p>
-                    </div>
-                ) : (
-                    <div className="space-y-12">
-                        {/* Create New Board */}
-                        <Button
-                            onClick={handleCreateBoard}
-                            className="w-full h-auto p-8"
-                            size="lg"
-                        >
-                            <div>
-                                <h1 className="text-2xl">Create a New Board</h1>
-                            </div>
-                        </Button>
-
-                        {/* Recent Boards */}
-                        {recentBoards.length > 0 && (
-                            <section>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Clock className="w-5 h-5" />
-                                    <h2 className="text-2xl font-heading">
-                                        Recent
-                                    </h2>
+            <div className="flex-1 grid-pattern">
+                {/* Main Content */}
+                <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
+                    {loading ? (
+                        <div className="flex items-center justify-center h-64">
+                            <p className="text-xl">Loading boards...</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-12">
+                            {/* Create New Board */}
+                            <Button
+                                onClick={handleCreateBoard}
+                                className="w-full h-auto p-8"
+                                size="lg"
+                            >
+                                <div>
+                                    <h1 className="text-2xl">
+                                        Create a New Board
+                                    </h1>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {recentBoards.map((board) => (
-                                        <BoardCard
-                                            key={board._id}
-                                            board={board}
-                                        />
-                                    ))}
+                            </Button>
+
+                            {/* Recent Boards */}
+                            {recentBoards.length > 0 && (
+                                <section>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <Clock className="w-5 h-5" />
+                                        <h2 className="text-2xl font-heading">
+                                            Recent
+                                        </h2>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {recentBoards.map((board) => (
+                                            <BoardCard
+                                                key={board._id}
+                                                board={board}
+                                            />
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* Search Bar */}
+                            <section>
+                                <div className="relative max-full">
+                                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-foreground/60" />
+                                    <Input
+                                        type="text"
+                                        placeholder="Search boards..."
+                                        value={searchQuery}
+                                        onChange={(e) =>
+                                            setSearchQuery(e.target.value)
+                                        }
+                                        className="pl-12 text-lg h-14"
+                                    />
                                 </div>
                             </section>
-                        )}
 
-                        {/* Search Bar */}
-                        <section>
-                            <div className="relative max-full">
-                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-foreground/60" />
-                                <Input
-                                    type="text"
-                                    placeholder="Search boards..."
-                                    value={searchQuery}
-                                    onChange={(e) =>
-                                        setSearchQuery(e.target.value)
-                                    }
-                                    className="pl-12 text-lg h-14"
-                                />
-                            </div>
-                        </section>
-
-                        {/* All Boards */}
-                        <section>
-                            <div className="flex items-center gap-2 mb-4">
-                                <Grid3x3 className="w-5 h-5" />
-                                <h2 className="text-2xl font-heading">
-                                    {searchQuery
-                                        ? 'Search Results'
-                                        : 'All Boards'}
-                                </h2>
-                                <span className="text-foreground/70">
-                                    ({filteredBoards.length})
-                                </span>
-                            </div>
-                            {filteredBoards.length === 0 ? (
-                                <Card className="p-12 text-center">
-                                    <p className="text-xl text-foreground/70">
+                            {/* All Boards */}
+                            <section>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Grid3x3 className="w-5 h-5" />
+                                    <h2 className="text-2xl font-heading">
                                         {searchQuery
-                                            ? 'No boards found'
-                                            : 'No boards yet - create your first one!'}
-                                    </p>
-                                </Card>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {filteredBoards.map((board) => (
-                                        <BoardCard
-                                            key={board._id}
-                                            board={board}
-                                        />
-                                    ))}
+                                            ? 'Search Results'
+                                            : 'All Boards'}
+                                    </h2>
+                                    <span className="text-foreground/70">
+                                        ({filteredBoards.length})
+                                    </span>
                                 </div>
-                            )}
-                        </section>
-                    </div>
-                )}
+                                {filteredBoards.length === 0 ? (
+                                    <Card className="p-12 text-center">
+                                        <p className="text-xl text-foreground/70">
+                                            {searchQuery
+                                                ? 'No boards found'
+                                                : 'No boards yet - create your first one!'}
+                                        </p>
+                                    </Card>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        {filteredBoards.map((board) => (
+                                            <BoardCard
+                                                key={board._id}
+                                                board={board}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </section>
+                        </div>
+                    )}
+                </div>
+                <Footer />
             </div>
-            <Footer />
         </div>
     );
 }

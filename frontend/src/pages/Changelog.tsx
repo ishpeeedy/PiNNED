@@ -19,7 +19,7 @@ export default function Changelog() {
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar />
-            <main className="flex-1">
+            <main className="flex-1 grid-pattern">
                 <div className="max-w-xl mx-auto px-4 py-8">
                     <div className="mb-2">
                         <Button

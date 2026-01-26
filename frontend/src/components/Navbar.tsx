@@ -41,7 +41,7 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
     };
 
     return (
-        <nav className="bg-secondary-background border-b-4 border-black px-6 py-1 flex items-center justify-between gap-4 relative z-10">
+        <nav className="bg-secondary-background border-b-4 border-black px-6 h-[60px] flex items-center justify-between gap-4 relative z-10">
             {/* Left: Logo */}
             <div
                 onClick={() => navigate('/')}
