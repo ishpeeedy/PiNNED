@@ -15,6 +15,12 @@ const Board = () => {
     const [isDeleteMode, setIsDeleteMode] = useState(false);
     const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
     const [lastUsedColor, setLastUsedColor] = useState<string | null>(null);
+    const [zoom, setZoom] = useState(1);
+
+    const handleZoomIn = () =>
+        setZoom((z) => Math.min(2, parseFloat((z + 0.25).toFixed(2))));
+    const handleZoomOut = () =>
+        setZoom((z) => Math.max(0.25, parseFloat((z - 0.25).toFixed(2))));
 
     // Undo/Redo history
     const [history, setHistory] = useState<Tile[][]>([]);
@@ -191,8 +197,8 @@ const Board = () => {
                 height: 200,
             };
 
-            // Position at center of viewport (accounting for canvas being below navbar/toolbar)
-            // For now, position at a simple grid location
+            // Position at center of viewport
+            // For now, position at a simple default location
             const position = {
                 x: 200,
                 y: 200,
@@ -369,6 +375,9 @@ const Board = () => {
                 canRedo={historyIndex < history.length - 1 && !isSyncing}
                 onColorChange={handleColorChange}
                 hasSelectedTile={selectedTileId !== null}
+                zoom={zoom}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
             />
             <Canvas
                 tiles={tiles}
@@ -377,6 +386,7 @@ const Board = () => {
                 onDeleteTile={handleDeleteTile}
                 onCreateTileFromDrop={handleCreateTileFromDrop}
                 onTileClick={handleTileClick}
+                zoom={zoom}
             />
         </div>
     );

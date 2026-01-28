@@ -495,7 +495,7 @@ export default function Landing() {
                                     you think.
                                 </p>
                                 <p className="text-sm text-white/50 mt-2">
-                                    Drag. Drop. Snap to grid.
+                                    Drag. Drop. Done.
                                 </p>
                             </div>
                         </div>

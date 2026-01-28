@@ -24,6 +24,9 @@ interface ToolbarProps {
     canRedo?: boolean;
     onColorChange?: (color: string) => void;
     hasSelectedTile?: boolean;
+    zoom?: number;
+    onZoomIn?: () => void;
+    onZoomOut?: () => void;
 }
 
 const Toolbar = ({
@@ -36,6 +39,9 @@ const Toolbar = ({
     canRedo = false,
     onColorChange,
     hasSelectedTile = false,
+    zoom = 1,
+    onZoomIn,
+    onZoomOut,
 }: ToolbarProps) => {
     console.log('Toolbar isDeleteMode:', isDeleteMode);
 
@@ -138,7 +144,8 @@ const Toolbar = ({
                 {/* Zoom Controls */}
                 <div className="flex items-center gap-2">
                     <Button
-                        onClick={() => toast.info('Zoom out (coming soon)')}
+                        onClick={onZoomOut}
+                        disabled={zoom <= 0.25}
                         variant="neutral"
                         className="gap-2"
                         title="Zoom out"
@@ -146,10 +153,11 @@ const Toolbar = ({
                         <ZoomOut className="w-4 h-4" />
                     </Button>
                     <span className="text-lg font-medium min-w-[4rem] text-center">
-                        100%
+                        {Math.round(zoom * 100)}%
                     </span>
                     <Button
-                        onClick={() => toast.info('Zoom in (coming soon)')}
+                        onClick={onZoomIn}
+                        disabled={zoom >= 2}
                         variant="neutral"
                         className="gap-2"
                         title="Zoom in"
