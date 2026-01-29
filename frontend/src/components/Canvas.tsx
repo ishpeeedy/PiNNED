@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Rnd } from 'react-rnd';
-import type { Tile } from '@/types';
+import type { Tile, BoardBackground } from '@/types';
 import TextTile from './tiles/TextTile';
 import LinkTile from './tiles/LinkTile';
 import ImageTile from './tiles/ImageTile';
@@ -15,6 +15,7 @@ interface CanvasProps {
         position: { x: number; y: number }
     ) => void;
     zoom?: number;
+    background?: BoardBackground;
     onTileClick?: (tileId: string) => void;
 }
 
@@ -25,6 +26,7 @@ const Canvas = ({
     onDeleteTile,
     onCreateTileFromDrop,
     zoom = 1,
+    background,
     onTileClick,
 }: CanvasProps) => {
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -35,6 +37,44 @@ const Canvas = ({
     const dragStartRef = useRef({ x: 0, y: 0 });
     const [isDragOver, setIsDragOver] = useState(false);
     const draggingTileRef = useRef<string | null>(null);
+
+    // Derive background settings
+    const bgType = background?.type ?? 'grid';
+    const hasCustomColors = !!(
+        background?.color || background?.foregroundColor
+    );
+    const useCssClass =
+        !hasCustomColors && bgType !== 'solid' && bgType !== 'image';
+
+    const bgStyle = useMemo(() => {
+        if (useCssClass) return undefined;
+
+        const style: React.CSSProperties = {};
+
+        if (bgType === 'solid') {
+            style.backgroundColor =
+                background?.color || 'var(--secondary-background)';
+        } else if (bgType === 'image' && background?.imageUrl) {
+            style.backgroundImage = `url(${background.imageUrl})`;
+            style.backgroundSize = 'cover';
+            style.backgroundPosition = 'center';
+        } else if (bgType === 'grid' || bgType === 'dots') {
+            const bg = background?.color || 'transparent';
+            const fg = background?.foregroundColor || 'rgba(0,0,0,0.15)';
+
+            if (bgType === 'grid') {
+                const svg = `<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" fill="${bg}"/><path d="M 40 0 L 0 0 0 40" fill="none" stroke="${fg}" stroke-width="1"/></svg>`;
+                style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+                style.backgroundSize = '40px 40px';
+            } else {
+                style.backgroundColor = bg;
+                style.backgroundImage = `radial-gradient(circle, ${fg} 1px, transparent 1px)`;
+                style.backgroundSize = '30px 30px';
+            }
+        }
+
+        return style;
+    }, [useCssClass, bgType, background]);
 
     // Direct DOM update for pan — no React re-render
     const applyPanTransform = useCallback((x: number, y: number) => {
@@ -163,8 +203,17 @@ const Canvas = ({
                 backgroundColor: 'var(--secondary-background)',
             }}
         >
-            {/* Cosmetic background — will be board-setting-driven later */}
-            <div className="absolute inset-0 pointer-events-none grid-pattern" />
+            {/* Cosmetic background — driven by board settings */}
+            <div
+                className={`absolute inset-0 pointer-events-none ${
+                    useCssClass
+                        ? bgType === 'dots'
+                            ? 'isometric-dots'
+                            : 'grid-pattern'
+                        : ''
+                }`}
+                style={useCssClass ? undefined : bgStyle}
+            />
 
             {/* Tiles container — pan and zoom separated to keep Rnd coordinate math correct */}
             <div

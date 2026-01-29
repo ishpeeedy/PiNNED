@@ -387,6 +387,7 @@ const Board = () => {
                 onCreateTileFromDrop={handleCreateTileFromDrop}
                 onTileClick={handleTileClick}
                 zoom={zoom}
+                background={board?.settings?.background}
             />
         </div>
     );

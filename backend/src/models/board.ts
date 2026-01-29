@@ -9,6 +9,12 @@ export interface IBoard extends Document {
     settings?: {
         tileColor?: string;
         canvasColor?: string;
+        background?: {
+            type?: 'solid' | 'grid' | 'dots' | 'image';
+            color?: string;
+            foregroundColor?: string;
+            imageUrl?: string;
+        };
     };
     visibility: 'private' | 'public';
     allowDuplication: boolean;
@@ -31,6 +37,16 @@ const boardSchema = new Schema<IBoard>(
             canvasColor: {
                 type: String,
                 default: 'oklch(100% 0 0)',
+            },
+            background: {
+                type: {
+                    type: String,
+                    enum: ['solid', 'grid', 'dots', 'image'],
+                    default: 'grid',
+                },
+                color: { type: String },
+                foregroundColor: { type: String },
+                imageUrl: { type: String },
             },
         },
         visibility: {

@@ -94,9 +94,7 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
 
                     {/* Settings Button */}
                     <button
-                        onClick={() => {
-                            /* TODO: Open settings modal */
-                        }}
+                        onClick={() => navigate(`/board/${board._id}/settings`)}
                         className="p-2 cursor-pointer"
                         title="Board settings"
                     >

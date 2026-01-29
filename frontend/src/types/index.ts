@@ -1,4 +1,11 @@
 // Board type matching backend IBoard
+export interface BoardBackground {
+    type: 'solid' | 'grid' | 'dots' | 'image';
+    color?: string;
+    foregroundColor?: string;
+    imageUrl?: string;
+}
+
 export interface Board {
     _id: string;
     userId: string;
@@ -8,6 +15,7 @@ export interface Board {
     settings: {
         tileColor: string;
         canvasColor: string;
+        background?: BoardBackground;
     };
     visibility: 'private' | 'public';
     allowDuplication: boolean;
@@ -63,6 +71,7 @@ export interface CreateBoardData {
     settings?: {
         tileColor?: string;
         canvasColor?: string;
+        background?: Partial<BoardBackground>;
     };
     visibility?: 'private' | 'public';
     allowDuplication?: boolean;

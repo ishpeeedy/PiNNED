@@ -11,6 +11,7 @@ import Register from './pages/Register.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import Changelog from './pages/Changelog.tsx';
 import Board from './pages/Board.tsx';
+import BoardSettings from './pages/BoardSettings.tsx';
 
 import { useAuthStore } from './stores/authStore';
 
@@ -61,6 +62,16 @@ function App() {
                     path="/board/:id"
                     element={
                         isAuthenticated ? <Board /> : <Navigate to="/login" />
+                    }
+                />
+                <Route
+                    path="/board/:id/settings"
+                    element={
+                        isAuthenticated ? (
+                            <BoardSettings />
+                        ) : (
+                            <Navigate to="/login" />
+                        )
                     }
                 />
                 <Route path="*" element={<Home />} />
