@@ -5,13 +5,11 @@ import {
     Calendar,
     Clock,
     Download,
-    Image as ImageIcon,
-    Link as LinkIcon,
-    Type,
     X,
     ArrowUpDown,
     ExternalLink,
 } from 'lucide-react';
+import Footer from '@/components/Footer';
 import {
     type ColumnDef,
     type ColumnFiltersState,
@@ -23,13 +21,20 @@ import {
     type SortingState,
     useReactTable,
 } from '@tanstack/react-table';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from '@/components/ui/accordion';
+
 import { boardAPI, tileAPI } from '@/services/api';
 import type { Board, Tile, BoardBackground } from '@/types';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import {
     Table,
     TableBody,
@@ -295,7 +300,7 @@ const BoardSettings = () => {
             <Navbar />
 
             <main className="flex-1 grid-pattern">
-                <div className="max-w-4xl mx-auto px-6 py-10 space-y-10">
+                <div className="max-w-6xl mx-auto px-[56px] py-10 space-y-[40px]">
                     {/* Back button */}
                     <Button
                         variant="neutral"
@@ -309,15 +314,14 @@ const BoardSettings = () => {
                     {/* ================================================ */}
                     {/*  Section 1 — Board Info                           */}
                     {/* ================================================ */}
-                    <section className="space-y-4">
-                        <h2 className="text-2xl font-heading">Board Info</h2>
-                        <Card>
-                            <CardContent className="p-6 space-y-4">
+                    <section className="space-y-5">
+                        <Card className="shadow-shadow py-5 px-5">
+                            <CardTitle className="px-5 text-2xl py-0">
+                                Board Info
+                            </CardTitle>
+                            <CardContent className="px-5">
                                 {/* Title */}
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-foreground/60">
-                                        Title
-                                    </label>
+                                <div className="">
                                     {isEditingTitle ? (
                                         <Input
                                             value={editedTitle}
@@ -333,14 +337,14 @@ const BoardSettings = () => {
                                                 }
                                             }}
                                             autoFocus
-                                            className="text-lg font-heading"
+                                            className="h-10 text-lg font-heading"
                                         />
                                     ) : (
                                         <div
                                             onClick={() =>
                                                 setIsEditingTitle(true)
                                             }
-                                            className="text-lg font-heading cursor-text px-3 py-2 border-2 border-transparent hover:border-border rounded-base transition-colors"
+                                            className="h-10 flex items-center text-lg font-heading cursor-text px-3 border-2 border-transparent hover:border-border rounded-base transition-colors"
                                         >
                                             {board.icon} {board.title}
                                         </div>
@@ -348,7 +352,7 @@ const BoardSettings = () => {
                                 </div>
 
                                 {/* Dates */}
-                                <div className="flex gap-8 text-sm text-foreground/60">
+                                <div className="flex gap-5 text-sm text-foreground/60 py-5">
                                     <div className="flex items-center gap-2">
                                         <Calendar className="w-4 h-4" />
                                         Created{' '}
@@ -366,12 +370,7 @@ const BoardSettings = () => {
                                 </div>
 
                                 {/* Export (dummy) */}
-                                <Button
-                                    variant="neutral"
-                                    disabled
-                                    className="gap-2 opacity-50"
-                                    title="Coming soon"
-                                >
+                                <Button className="gap-2" title="Coming soon">
                                     <Download className="w-4 h-4" />
                                     Export Board
                                 </Button>
@@ -383,9 +382,11 @@ const BoardSettings = () => {
                     {/*  Section 2 — Board Theme                          */}
                     {/* ================================================ */}
                     <section className="space-y-4">
-                        <h2 className="text-2xl font-heading">Board Theme</h2>
-                        <Card>
-                            <CardContent className="p-6 space-y-6">
+                        <Card className="shadow-shadow py-4 px-5">
+                            <CardTitle className="px-5 text-2xl py-0 mb-0">
+                                Board Theme
+                            </CardTitle>
+                            <CardContent className=" space-y-5">
                                 {/* Type picker */}
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                     {BG_OPTIONS.map((opt) => (
@@ -400,7 +401,7 @@ const BoardSettings = () => {
                                         >
                                             {/* Preview swatch */}
                                             <div
-                                                className={`w-full h-16 rounded-base border-2 border-border ${
+                                                className={`w-full h-20 rounded-base border-2 border-border ${
                                                     opt.value === 'grid'
                                                         ? 'grid-pattern'
                                                         : opt.value === 'dots'
@@ -420,7 +421,7 @@ const BoardSettings = () => {
                                                         : undefined
                                                 }
                                             />
-                                            <span className="font-medium text-sm">
+                                            <span className="font-medium text-sm py-0">
                                                 {opt.label}
                                             </span>
                                             <span className="text-xs text-foreground/50">
@@ -434,12 +435,12 @@ const BoardSettings = () => {
                                 {(bgType === 'solid' ||
                                     bgType === 'grid' ||
                                     bgType === 'dots') && (
-                                    <div className="flex flex-wrap gap-6">
+                                    <div className="flex flex-wrap gap-6 py-0">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">
+                                            <label className="text-sm font-medium py-2">
                                                 Background Color
                                             </label>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 ">
                                                 <input
                                                     type="color"
                                                     value={bgColor || '#ffffff'}
@@ -516,7 +517,7 @@ const BoardSettings = () => {
                                             <img
                                                 src={bgImageUrl}
                                                 alt="Preview"
-                                                className="w-full max-h-40 object-cover rounded-base border-2 border-border mt-2"
+                                                className="w-full max-h-40 object-cover rounded-base border-2 border-border mt-0"
                                             />
                                         )}
                                     </div>
@@ -524,239 +525,278 @@ const BoardSettings = () => {
 
                                 <Button
                                     onClick={saveBackground}
-                                    className="gap-2"
+                                    className="gap-0 py-0 mt-0 mb-0"
                                 >
-                                    Save Theme
+                                    Apply Theme
                                 </Button>
                             </CardContent>
                         </Card>
                     </section>
 
                     {/* ================================================ */}
-                    {/*  Section 3 — Image Gallery                        */}
+                    {/*  Section 3 — Text Tiles                           */}
                     {/* ================================================ */}
-                    <section className="space-y-4">
-                        <h2 className="text-2xl font-heading flex items-center gap-2">
-                            <ImageIcon className="w-6 h-6" />
-                            Images
-                            <span className="text-sm font-base text-foreground/50">
-                                ({imageTiles.length})
-                            </span>
-                        </h2>
-
-                        {imageTiles.length === 0 ? (
-                            <Card>
-                                <CardContent className="p-10 text-center text-foreground/50">
-                                    No image tiles on this board yet.
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                {imageTiles.map((tile) => (
-                                    <div
-                                        key={tile._id}
-                                        className="cursor-pointer group"
-                                        onClick={() =>
-                                            setLightboxSrc(
-                                                tile.data.imageUrl ?? null
-                                            )
-                                        }
-                                    >
-                                        <Card className="overflow-hidden">
-                                            <img
-                                                src={tile.data.imageUrl}
-                                                alt={
-                                                    tile.data.caption ||
-                                                    'Board image'
-                                                }
-                                                className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
-                                            />
-                                            {tile.data.caption && (
-                                                <CardContent className="p-2 text-xs truncate">
-                                                    {tile.data.caption}
-                                                </CardContent>
-                                            )}
+                    <section className="space-y-5 ">
+                        <Accordion type="multiple" className="w-full">
+                            <AccordionItem value="item-1">
+                                <AccordionTrigger>
+                                    Text Tiles ({textTiles.length})
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    {textTiles.length === 0 ? (
+                                        <Card>
+                                            <CardContent className="p-5 text-center text-foreground/50">
+                                                No text tiles on this board yet.
+                                            </CardContent>
                                         </Card>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    ) : (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {textTiles.map((tile) => (
+                                                <Card key={tile._id}>
+                                                    <CardContent className="px-2 py-1">
+                                                        <h3 className="font-heading text-lg">
+                                                            {tile.data.header ||
+                                                                'Untitled'}
+                                                        </h3>
+                                                        <p className="text-sm text-foreground/70 line-clamp-3">
+                                                            {tile.data.text ||
+                                                                'No content'}
+                                                        </p>
+                                                    </CardContent>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
                     </section>
 
                     {/* ================================================ */}
                     {/*  Section 4 — Links Table                          */}
                     {/* ================================================ */}
-                    <section className="space-y-4">
-                        <h2 className="text-2xl font-heading flex items-center gap-2">
-                            <LinkIcon className="w-6 h-6" />
-                            Links
-                            <span className="text-sm font-base text-foreground/50">
-                                ({linkRows.length})
-                            </span>
-                        </h2>
-
-                        {linkRows.length === 0 ? (
-                            <Card>
-                                <CardContent className="p-10 text-center text-foreground/50">
-                                    No link tiles on this board yet.
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <div className="w-full font-base text-foreground space-y-4">
-                                {/* Filter input */}
-                                <Input
-                                    placeholder="Search links..."
-                                    value={
-                                        (table
-                                            .getColumn('title')
-                                            ?.getFilterValue() as string) ?? ''
-                                    }
-                                    onChange={(e) =>
-                                        table
-                                            .getColumn('title')
-                                            ?.setFilterValue(e.target.value)
-                                    }
-                                    className="max-w-sm"
-                                />
-
-                                {/* Table */}
-                                <Table>
-                                    <TableHeader className="font-heading">
-                                        {table
-                                            .getHeaderGroups()
-                                            .map((headerGroup) => (
-                                                <TableRow
-                                                    key={headerGroup.id}
-                                                    className="bg-secondary-background text-foreground"
-                                                >
-                                                    {headerGroup.headers.map(
-                                                        (header) => (
-                                                            <TableHead
-                                                                key={header.id}
-                                                                className="text-foreground"
-                                                            >
-                                                                {header.isPlaceholder
-                                                                    ? null
-                                                                    : flexRender(
-                                                                          header
-                                                                              .column
-                                                                              .columnDef
-                                                                              .header,
-                                                                          header.getContext()
-                                                                      )}
-                                                            </TableHead>
+                    <section className="space-y-5">
+                        <Accordion type="multiple" className="w-full">
+                            <AccordionItem value="item-1">
+                                <AccordionTrigger>
+                                    Link Tiles ({linkRows.length})
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    {linkRows.length === 0 ? (
+                                        <Card>
+                                            <CardContent className="p-10 text-center text-foreground/50">
+                                                No link tiles on this board yet.
+                                            </CardContent>
+                                        </Card>
+                                    ) : (
+                                        <div className="w-full font-base text-foreground space-y-4">
+                                            {/* Filter input */}
+                                            <Input
+                                                placeholder="Search links..."
+                                                value={
+                                                    (table
+                                                        .getColumn('title')
+                                                        ?.getFilterValue() as string) ??
+                                                    ''
+                                                }
+                                                onChange={(e) =>
+                                                    table
+                                                        .getColumn('title')
+                                                        ?.setFilterValue(
+                                                            e.target.value
                                                         )
-                                                    )}
-                                                </TableRow>
-                                            ))}
-                                    </TableHeader>
-                                    <TableBody>
-                                        {table.getRowModel().rows?.length ? (
-                                            table
-                                                .getRowModel()
-                                                .rows.map((row) => (
-                                                    <TableRow
-                                                        key={row.id}
-                                                        className="bg-secondary-background text-foreground"
-                                                    >
-                                                        {row
-                                                            .getVisibleCells()
-                                                            .map((cell) => (
-                                                                <TableCell
-                                                                    key={
-                                                                        cell.id
-                                                                    }
+                                                }
+                                                className="max-w-sm"
+                                            />
+
+                                            {/* Table */}
+                                            <Table>
+                                                <TableHeader className="font-heading">
+                                                    {table
+                                                        .getHeaderGroups()
+                                                        .map((headerGroup) => (
+                                                            <TableRow
+                                                                key={
+                                                                    headerGroup.id
+                                                                }
+                                                                className="bg-secondary-background text-foreground"
+                                                            >
+                                                                {headerGroup.headers.map(
+                                                                    (
+                                                                        header
+                                                                    ) => (
+                                                                        <TableHead
+                                                                            key={
+                                                                                header.id
+                                                                            }
+                                                                            className="text-foreground"
+                                                                        >
+                                                                            {header.isPlaceholder
+                                                                                ? null
+                                                                                : flexRender(
+                                                                                      header
+                                                                                          .column
+                                                                                          .columnDef
+                                                                                          .header,
+                                                                                      header.getContext()
+                                                                                  )}
+                                                                        </TableHead>
+                                                                    )
+                                                                )}
+                                                            </TableRow>
+                                                        ))}
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {table.getRowModel().rows
+                                                        ?.length ? (
+                                                        table
+                                                            .getRowModel()
+                                                            .rows.map((row) => (
+                                                                <TableRow
+                                                                    key={row.id}
+                                                                    className="bg-secondary-background text-foreground"
                                                                 >
-                                                                    {flexRender(
-                                                                        cell
-                                                                            .column
-                                                                            .columnDef
-                                                                            .cell,
-                                                                        cell.getContext()
-                                                                    )}
-                                                                </TableCell>
-                                                            ))}
-                                                    </TableRow>
-                                                ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell
-                                                    colSpan={linkColumns.length}
-                                                    className="h-24 text-center"
+                                                                    {row
+                                                                        .getVisibleCells()
+                                                                        .map(
+                                                                            (
+                                                                                cell
+                                                                            ) => (
+                                                                                <TableCell
+                                                                                    key={
+                                                                                        cell.id
+                                                                                    }
+                                                                                >
+                                                                                    {flexRender(
+                                                                                        cell
+                                                                                            .column
+                                                                                            .columnDef
+                                                                                            .cell,
+                                                                                        cell.getContext()
+                                                                                    )}
+                                                                                </TableCell>
+                                                                            )
+                                                                        )}
+                                                                </TableRow>
+                                                            ))
+                                                    ) : (
+                                                        <TableRow>
+                                                            <TableCell
+                                                                colSpan={
+                                                                    linkColumns.length
+                                                                }
+                                                                className="h-24 text-center"
+                                                            >
+                                                                No results.
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+
+                                            {/* Pagination */}
+                                            <div className="flex items-center justify-end space-x-2 py-2">
+                                                <span className="text-sm text-foreground/50">
+                                                    {
+                                                        table.getFilteredRowModel()
+                                                            .rows.length
+                                                    }{' '}
+                                                    link(s)
+                                                </span>
+                                                <Button
+                                                    variant="noShadow"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        table.previousPage()
+                                                    }
+                                                    disabled={
+                                                        !table.getCanPreviousPage()
+                                                    }
                                                 >
-                                                    No results.
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-
-                                {/* Pagination */}
-                                <div className="flex items-center justify-end space-x-2 py-2">
-                                    <span className="text-sm text-foreground/50">
-                                        {
-                                            table.getFilteredRowModel().rows
-                                                .length
-                                        }{' '}
-                                        link(s)
-                                    </span>
-                                    <Button
-                                        variant="noShadow"
-                                        size="sm"
-                                        onClick={() => table.previousPage()}
-                                        disabled={!table.getCanPreviousPage()}
-                                    >
-                                        Previous
-                                    </Button>
-                                    <Button
-                                        variant="noShadow"
-                                        size="sm"
-                                        onClick={() => table.nextPage()}
-                                        disabled={!table.getCanNextPage()}
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
+                                                    Previous
+                                                </Button>
+                                                <Button
+                                                    variant="noShadow"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        table.nextPage()
+                                                    }
+                                                    disabled={
+                                                        !table.getCanNextPage()
+                                                    }
+                                                >
+                                                    Next
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
                     </section>
-
                     {/* ================================================ */}
-                    {/*  Section 5 — Text Tiles                           */}
+                    {/*  Section 5 — Image Gallery                        */}
                     {/* ================================================ */}
-                    <section className="space-y-4 pb-10">
-                        <h2 className="text-2xl font-heading flex items-center gap-2">
-                            <Type className="w-6 h-6" />
-                            Text Tiles
-                            <span className="text-sm font-base text-foreground/50">
-                                ({textTiles.length})
-                            </span>
-                        </h2>
-
-                        {textTiles.length === 0 ? (
-                            <Card>
-                                <CardContent className="p-10 text-center text-foreground/50">
-                                    No text tiles on this board yet.
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {textTiles.map((tile) => (
-                                    <Card key={tile._id}>
-                                        <CardContent className="p-4 space-y-1">
-                                            <h3 className="font-heading text-lg">
-                                                {tile.data.header || 'Untitled'}
-                                            </h3>
-                                            <p className="text-sm text-foreground/70 line-clamp-3">
-                                                {tile.data.text || 'No content'}
-                                            </p>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
-                        )}
+                    <section className="space-y-4">
+                        <Accordion type="multiple" className="w-full">
+                            <AccordionItem value="item-1">
+                                <AccordionTrigger>
+                                    Image Tiles ({imageTiles.length})
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    {imageTiles.length === 0 ? (
+                                        <Card>
+                                            <CardContent className="p-10 text-center text-foreground/50">
+                                                No image tiles on this board
+                                                yet.
+                                            </CardContent>
+                                        </Card>
+                                    ) : (
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                            {imageTiles.map((tile) => (
+                                                <div
+                                                    key={tile._id}
+                                                    className="cursor-pointer group"
+                                                    onClick={() =>
+                                                        setLightboxSrc(
+                                                            tile.data
+                                                                .imageUrl ??
+                                                                null
+                                                        )
+                                                    }
+                                                >
+                                                    <Card className="overflow-hidden">
+                                                        <img
+                                                            src={
+                                                                tile.data
+                                                                    .imageUrl
+                                                            }
+                                                            alt={
+                                                                tile.data
+                                                                    .caption ||
+                                                                'Board image'
+                                                            }
+                                                            className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
+                                                        />
+                                                        {tile.data.caption && (
+                                                            <CardContent className="p-2 text-xs truncate">
+                                                                {
+                                                                    tile.data
+                                                                        .caption
+                                                                }
+                                                            </CardContent>
+                                                        )}
+                                                    </Card>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
                     </section>
                 </div>
+                <Footer />
             </main>
 
             {/* Lightbox overlay */}
