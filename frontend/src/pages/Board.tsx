@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Toolbar from '@/components/Toolbar';
 import Canvas from '@/components/Canvas';
-import Loader from '@/components/Loader';
 
 const Board = () => {
     const { id } = useParams<{ id: string }>(); // Get board ID from URL
@@ -141,8 +140,6 @@ const Board = () => {
             if (!id) return;
 
             try {
-                setLoading(true);
-
                 // Fetch board and tiles in parallel
                 const [boardData, tilesData] = await Promise.all([
                     boardAPI.getBoard(id),
@@ -170,7 +167,6 @@ const Board = () => {
             <div className="min-h-screen flex flex-col">
                 <Navbar />
                 <Toolbar />
-                <Loader variant="standard" />
             </div>
         );
     }

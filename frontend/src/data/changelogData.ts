@@ -1,5 +1,30 @@
 export const changelogData = [
     {
+        version: '1.3',
+        date: 'Jan 31, 2026',
+        changes: [
+            'Added animated loader to image tiles — shows a stroke animation during upload and while images load',
+            'Removed unnecessary loader from the dashboard page for a faster, snappier experience',
+        ],
+    },
+    {
+        version: '1.2',
+        date: 'Jan 30, 2026',
+        changes: [
+            'Added Board Settings page — customize your board background color or pattern',
+            'Board Settings now uses accordion sections for organized, collapsible settings',
+            'Fixed a casing error in the Footer component',
+        ],
+    },
+    {
+        version: '1.1',
+        date: 'Jan 28, 2026',
+        changes: [
+            'Removed snap-to-grid system — tiles now move freely on the canvas for more flexible layouts',
+            'Fixed UI element alignment on the canvas grid',
+        ],
+    },
+    {
         version: '1.0',
         date: 'Jan 26, 2026',
         changes: [
