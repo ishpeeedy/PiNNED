@@ -20,12 +20,14 @@ import {
 import { Search, Clock, Grid3x3, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
+import Loader from '@/components/Loader';
 import type { Board } from '@/types';
 
 export default function Dashboard() {
     const navigate = useNavigate();
     const [boards, setBoards] = useState<Board[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [dataReady, setDataReady] = useState(false);
+    const [loaderDone, setLoaderDone] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
@@ -40,7 +42,7 @@ export default function Dashboard() {
             console.error('Failed to fetch boards:', error);
             toast.error('Failed to load boards');
         } finally {
-            setLoading(false);
+            setDataReady(true);
         }
     };
 
@@ -176,13 +178,18 @@ export default function Dashboard() {
         <div className="min-h-screen flex flex-col">
             <Navbar />
 
-            <div className="flex-1 grid-pattern">
+            <div className="flex-1 grid-pattern flex flex-col">
                 {/* Main Content */}
-                <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
-                    {loading ? (
-                        <div className="flex items-center justify-center h-64">
-                            <p className="text-xl">Loading boards...</p>
-                        </div>
+                <div
+                    className={`max-w-7xl mx-auto px-6 py-8 relative z-10 w-full${!loaderDone ? ' flex-1 flex flex-col' : ''}`}
+                >
+                    {!loaderDone ? (
+                        <Loader
+                            variant="standard"
+                            minDuration={750}
+                            ready={dataReady}
+                            onDone={() => setLoaderDone(true)}
+                        />
                     ) : (
                         <div className="space-y-12">
                             {/* Create New Board */}

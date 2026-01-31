@@ -32,6 +32,7 @@ import { boardAPI, tileAPI } from '@/services/api';
 import type { Board, Tile, BoardBackground } from '@/types';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
+import Loader from '@/components/Loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
@@ -278,8 +279,10 @@ const BoardSettings = () => {
     /* ---------------------------------------------------------------- */
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen">
-                <p className="text-2xl">Loading settings...</p>
+            <div className="flex flex-col min-h-screen">
+                <Navbar />
+                <Loader variant="standard" />
+                <Footer />
             </div>
         );
     }

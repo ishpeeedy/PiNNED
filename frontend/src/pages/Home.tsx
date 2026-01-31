@@ -1,5 +1,6 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import gsap from 'gsap';
+import Loader from '@/components/Loader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -146,7 +147,7 @@ const TemplateCarousel = () => {
                 <div className="flex">
                     {carouselBoards.map((board, i) => (
                         <div
-                            key={board.title}
+                            key={i}
                             className={`shrink-0 w-[320px] min-w-0 ${i === 0 ? 'pl-6' : 'pl-4'}`}
                         >
                             <Card className="overflow-hidden gap-0 py-0 w-full dark:bg-secondary-background">
@@ -190,6 +191,29 @@ export default function Landing() {
     const imgRef = useRef<HTMLImageElement>(null);
     const gridRef = useRef<HTMLDivElement>(null);
     const bentoRef = useRef<HTMLElement>(null);
+
+    const [heroLoaded, setHeroLoaded] = useState(false);
+    const [loaderDone, setLoaderDone] = useState(false);
+
+    // Scroll to top on mount — disable browser scroll restoration
+    useEffect(() => {
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+        window.scrollTo(0, 0);
+    }, []);
+
+    // Preload the hero image
+    useEffect(() => {
+        const img = new Image();
+        img.src = landingImg;
+        if (img.complete) {
+            setHeroLoaded(true);
+        } else {
+            img.onload = () => setHeroLoaded(true);
+            img.onerror = () => setHeroLoaded(true); // don't block forever
+        }
+    }, []);
 
     useEffect(() => {
         const section = sectionRef.current;
@@ -274,6 +298,16 @@ export default function Landing() {
 
     return (
         <>
+            {/* Landing loader — covers page while hero image loads */}
+            {!loaderDone && (
+                <Loader
+                    variant="landing"
+                    minDuration={1500}
+                    ready={heroLoaded}
+                    onDone={() => setLoaderDone(true)}
+                />
+            )}
+
             <div
                 ref={sectionRef}
                 className="relative w-full h-screen flex items-center justify-center bg-background overflow-hidden"

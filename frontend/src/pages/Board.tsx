@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Toolbar from '@/components/Toolbar';
 import Canvas from '@/components/Canvas';
+import Loader from '@/components/Loader';
 
 const Board = () => {
     const { id } = useParams<{ id: string }>(); // Get board ID from URL
@@ -166,8 +167,10 @@ const Board = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen">
-                <p className="text-2xl">Loading board...</p>
+            <div className="min-h-screen flex flex-col">
+                <Navbar />
+                <Toolbar />
+                <Loader variant="standard" />
             </div>
         );
     }
