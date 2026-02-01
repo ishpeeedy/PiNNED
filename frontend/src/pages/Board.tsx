@@ -276,6 +276,18 @@ const Board = () => {
         setSelectedTileId(tileId);
     };
 
+    const handleBringToFront = () => {
+        if (!selectedTileId) return;
+        const maxZ = Math.max(...tiles.map((t) => t.zIndex ?? 1), 0);
+        handleTileUpdate(selectedTileId, { zIndex: maxZ + 1 });
+    };
+
+    const handleSendToBack = () => {
+        if (!selectedTileId) return;
+        const minZ = Math.min(...tiles.map((t) => t.zIndex ?? 1), 0);
+        handleTileUpdate(selectedTileId, { zIndex: minZ - 1 });
+    };
+
     const handleColorChange = (color: string) => {
         if (!selectedTileId) {
             toast.error('No tile selected');
@@ -377,6 +389,8 @@ const Board = () => {
                 zoom={zoom}
                 onZoomIn={handleZoomIn}
                 onZoomOut={handleZoomOut}
+                onBringToFront={handleBringToFront}
+                onSendToBack={handleSendToBack}
             />
             <Canvas
                 tiles={tiles}

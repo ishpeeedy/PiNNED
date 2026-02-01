@@ -38,6 +38,18 @@ const Canvas = ({
     const [isDragOver, setIsDragOver] = useState(false);
     const draggingTileRef = useRef<string | null>(null);
 
+    // Bring a tile to the front by giving it the highest zIndex
+    const bringToFront = useCallback(
+        (tileId: string) => {
+            const maxZ = Math.max(...tiles.map((t) => t.zIndex ?? 1), 0);
+            const tile = tiles.find((t) => t._id === tileId);
+            if (tile && (tile.zIndex ?? 1) < maxZ) {
+                onTileUpdate?.(tileId, { zIndex: maxZ + 1 });
+            }
+        },
+        [tiles, onTileUpdate]
+    );
+
     // Derive background settings
     const bgType = background?.type ?? 'grid';
     const hasCustomColors = !!(
@@ -260,8 +272,10 @@ const Canvas = ({
                                       }
                                     : false
                             }
+                            style={{ zIndex: tile.zIndex ?? 1 }}
                             onDragStart={() => {
                                 draggingTileRef.current = tile._id;
+                                bringToFront(tile._id);
                                 const tileDiv = document.querySelector(
                                     `[data-tile-id="${tile._id}"]`
                                 ) as HTMLElement;
@@ -306,6 +320,7 @@ const Canvas = ({
                                     if (isDeleteMode) {
                                         onDeleteTile?.(tile._id);
                                     } else {
+                                        bringToFront(tile._id);
                                         onTileClick?.(tile._id);
                                     }
                                 }}

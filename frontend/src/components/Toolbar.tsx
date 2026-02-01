@@ -8,6 +8,8 @@ import {
     ZoomIn,
     ZoomOut,
     Trash2,
+    ArrowUpToLine,
+    ArrowDownToLine,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +29,8 @@ interface ToolbarProps {
     zoom?: number;
     onZoomIn?: () => void;
     onZoomOut?: () => void;
+    onBringToFront?: () => void;
+    onSendToBack?: () => void;
 }
 
 const Toolbar = ({
@@ -42,6 +46,8 @@ const Toolbar = ({
     zoom = 1,
     onZoomIn,
     onZoomOut,
+    onBringToFront,
+    onSendToBack,
 }: ToolbarProps) => {
     console.log('Toolbar isDeleteMode:', isDeleteMode);
 
@@ -93,6 +99,29 @@ const Toolbar = ({
                     onColorChange={(color) => onColorChange?.(color)}
                     disabled={!hasSelectedTile}
                 />
+
+                {/* Separator */}
+                <div className="w-px h-8 bg-black mx-2" />
+
+                {/* Layer Order */}
+                <Button
+                    onClick={onBringToFront}
+                    disabled={!hasSelectedTile}
+                    variant="neutral"
+                    className="gap-2"
+                    title="Bring to front"
+                >
+                    <ArrowUpToLine className="w-4 h-4" />
+                </Button>
+                <Button
+                    onClick={onSendToBack}
+                    disabled={!hasSelectedTile}
+                    variant="neutral"
+                    className="gap-2"
+                    title="Send to back"
+                >
+                    <ArrowDownToLine className="w-4 h-4" />
+                </Button>
 
                 {/* Separator */}
                 <div className="w-px h-8 bg-black mx-2" />
