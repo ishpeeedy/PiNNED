@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import { Toaster } from '@/components/ui/sonner';
+import ScrollToTop from './components/ScrollToTop.tsx';
 import '../global.css';
 
 import Home from './pages/Home.tsx';
@@ -24,6 +25,7 @@ function App() {
 
     return (
         <>
+            <ScrollToTop />
             <Toaster position="bottom-right" />
             <Routes>
                 <Route path="/" element={<Home />} />

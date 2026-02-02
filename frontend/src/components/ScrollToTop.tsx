@@ -5,7 +5,10 @@ const ScrollToTop = () => {
     const { pathname } = useLocation();
 
     useEffect(() => {
+        // Force scroll reset — covers both normal scroll and GSAP normalizeScroll proxy
         window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
     }, [pathname]);
 
     return null;
