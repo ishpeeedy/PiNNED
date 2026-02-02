@@ -172,13 +172,6 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
                                             'loader-stroke 50s linear 0s 1 normal forwards',
                                     }}
                                 />
-                                <style>{`
-                                    @keyframes loader-stroke {
-                                        0% { stroke-dashoffset: 0px; stroke-dasharray: 0px, 6645.25px; }
-                                        50% { stroke-dashoffset: -3322.625px; stroke-dasharray: 3322.625px, 3322.625px; }
-                                        100% { stroke-dashoffset: -6645.25px; stroke-dasharray: 6645.25px, 0px; }
-                                    }
-                                `}</style>
                             </svg>
                         </div>
                     )}
@@ -261,13 +254,6 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
                                     'loader-stroke 50s linear 0s 1 normal forwards',
                             }}
                         />
-                        <style>{`
-                            @keyframes loader-stroke {
-                                0% { stroke-dashoffset: 0px; stroke-dasharray: 0px, 6645.25px; }
-                                50% { stroke-dashoffset: -3322.625px; stroke-dasharray: 3322.625px, 3322.625px; }
-                                100% { stroke-dashoffset: -6645.25px; stroke-dasharray: 6645.25px, 0px; }
-                            }
-                        `}</style>
                     </svg>
                     {!uploading && <span>Click to add image</span>}
                 </div>

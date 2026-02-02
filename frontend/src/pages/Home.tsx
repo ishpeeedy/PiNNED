@@ -292,6 +292,7 @@ export default function Landing() {
         }
 
         return () => {
+            ScrollTrigger.normalizeScroll(false);
             ScrollTrigger.getAll().forEach((t) => t.kill());
         };
     }, []);
