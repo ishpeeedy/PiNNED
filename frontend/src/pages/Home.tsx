@@ -321,7 +321,14 @@ export default function Landing() {
                 }
             });
             // Clear only GSAP-specific inline styles from body/html (overflow, height, position)
-            const gsapProps = ['overflow', 'height', 'position', 'top', 'left', 'width'];
+            const gsapProps = [
+                'overflow',
+                'height',
+                'position',
+                'top',
+                'left',
+                'width',
+            ];
             gsapProps.forEach((prop) => {
                 document.body.style.removeProperty(prop);
                 document.documentElement.style.removeProperty(prop);
