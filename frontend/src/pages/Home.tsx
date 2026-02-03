@@ -232,8 +232,6 @@ export default function Landing() {
         // Chrome (Navbar + Toolbar) is fixed at 60px each = 120px = 3 grid cells
         grid.style.top = '120px';
 
-        ScrollTrigger.normalizeScroll(true);
-
         const tiles = section.querySelectorAll('.mock-tile');
 
         // Calculate how much to scale the 320×240 container to fill the viewport
@@ -299,18 +297,24 @@ export default function Landing() {
         }
 
         return () => {
-            // Kill all ScrollTrigger instances FIRST while DOM nodes still exist
             ScrollTrigger.getAll().forEach((t) => t.kill());
-            // Then disable normalizeScroll
-            ScrollTrigger.normalizeScroll(false);
-            // Clear any residual inline styles GSAP may have left
             if (container) {
                 gsap.set(container, { clearProps: 'all' });
             }
             if (section) {
                 section.style.cssText = '';
             }
-            // Remove any pin-spacer wrappers left behind
+
+            // Clear any GSAP-injected styles on body/html
+            document.body.style.overflow = '';
+            document.body.style.height = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.width = '';
+            document.documentElement.style.overflow = '';
+            document.documentElement.style.height = '';
+
             document.querySelectorAll('.pin-spacer').forEach((el) => {
                 const parent = el.parentNode;
                 if (parent) {
@@ -319,19 +323,6 @@ export default function Landing() {
                     }
                     parent.removeChild(el);
                 }
-            });
-            // Clear only GSAP-specific inline styles from body/html (overflow, height, position)
-            const gsapProps = [
-                'overflow',
-                'height',
-                'position',
-                'top',
-                'left',
-                'width',
-            ];
-            gsapProps.forEach((prop) => {
-                document.body.style.removeProperty(prop);
-                document.documentElement.style.removeProperty(prop);
             });
             window.scrollTo(0, 0);
         };

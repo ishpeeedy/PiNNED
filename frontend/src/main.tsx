@@ -33,7 +33,7 @@ function App() {
                     path="/login"
                     element={
                         isAuthenticated ? (
-                            <Navigate to="/dashboard" />
+                            <Navigate to="/dashboard" replace />
                         ) : (
                             <Login />
                         )
@@ -43,7 +43,7 @@ function App() {
                     path="/register"
                     element={
                         isAuthenticated ? (
-                            <Navigate to="/dashboard" />
+                            <Navigate to="/dashboard" replace />
                         ) : (
                             <Register />
                         )
@@ -55,7 +55,7 @@ function App() {
                         isAuthenticated ? (
                             <Dashboard />
                         ) : (
-                            <Navigate to="/login" />
+                            <Navigate to="/login" replace />
                         )
                     }
                 />
@@ -63,7 +63,11 @@ function App() {
                 <Route
                     path="/board/:id"
                     element={
-                        isAuthenticated ? <Board /> : <Navigate to="/login" />
+                        isAuthenticated ? (
+                            <Board />
+                        ) : (
+                            <Navigate to="/login" replace />
+                        )
                     }
                 />
                 <Route
@@ -72,7 +76,7 @@ function App() {
                         isAuthenticated ? (
                             <BoardSettings />
                         ) : (
-                            <Navigate to="/login" />
+                            <Navigate to="/login" replace />
                         )
                     }
                 />
