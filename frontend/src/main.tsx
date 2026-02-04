@@ -13,6 +13,7 @@ import Dashboard from './pages/Dashboard.tsx';
 import Changelog from './pages/Changelog.tsx';
 import Board from './pages/Board.tsx';
 import BoardSettings from './pages/BoardSettings.tsx';
+import NotFound from './pages/NotFound.tsx';
 
 import { useAuthStore } from './stores/authStore';
 
@@ -80,7 +81,7 @@ function App() {
                         )
                     }
                 />
-                <Route path="*" element={<Home />} />
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </>
     );
