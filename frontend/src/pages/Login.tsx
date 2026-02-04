@@ -91,11 +91,14 @@ export default function Login() {
                             </Button>
                             <div className="mt-4 text-center text-sm">
                                 Don't have an account?{' '}
-                                <Link
-                                    to="/register"
-                                    className="underline underline-offset-4"
-                                >
-                                    Sign up
+                                <Link to="/register" className="underline">
+                                    <span> Sign up</span>
+                                    <svg
+                                        viewBox="0 0 13 20"
+                                        className="w-4 h-4"
+                                    >
+                                        <polyline points="0.5 19.5 3 19.5 12.5 10 3 0.5" />
+                                    </svg>
                                 </Link>
                             </div>
                         </CardFooter>

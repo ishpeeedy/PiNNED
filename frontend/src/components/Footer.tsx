@@ -7,6 +7,12 @@ const Footer = () => {
                         <a
                             href="/changelog"
                             className="underline flex items-center gap-2"
+                            style={
+                                {
+                                    '--line': '#000000',
+                                    '--color': '#000000',
+                                } as React.CSSProperties
+                            }
                         >
                             <span>Changelog</span>
                             <svg viewBox="0 0 13 20" className="w-4 h-4">
@@ -18,6 +24,14 @@ const Footer = () => {
                         <a
                             href="https://github.com/ishpeeedy"
                             className="underline flex items-center gap-2"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={
+                                {
+                                    '--line': '#000000',
+                                    '--color': '#000000',
+                                } as React.CSSProperties
+                            }
                         >
                             <span>Made with 🖤 by ishpeeedy</span>
                             <svg viewBox="0 0 13 20" className="w-4 h-4">

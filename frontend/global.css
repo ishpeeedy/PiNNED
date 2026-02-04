@@ -136,8 +136,8 @@
 }
 
 .underline {
-    --line: #000000;
-    --color: #000000;
+    --line: var(--foreground);
+    --color: var(--foreground);
     text-decoration: none;
     color: var(--color);
     position: relative;

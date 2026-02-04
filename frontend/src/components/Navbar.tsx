@@ -44,7 +44,7 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
         <nav className="bg-secondary-background border-b-4 border-black px-6 h-[60px] flex items-center justify-between gap-4 relative z-10">
             {/* Left: Logo */}
             <div
-                onClick={() => navigate('/')}
+                onClick={() => navigate(user ? '/dashboard' : '/')}
                 className="flex items-center cursor-pointer"
             >
                 <img src={logo} alt="PINNED" className="w-auto h-[50px]" />
@@ -147,10 +147,9 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 ) : (
-                    <div>
-                        <a href="/login">Login</a>
-                        {' | '}
-                        <a href="/register">Register</a>
+                    <div className="dark:text-[var(--main)]">
+                        <a href="/login">Login |</a>
+                        <a href="/register">{' Register'}</a>
                     </div>
                 )}
             </div>

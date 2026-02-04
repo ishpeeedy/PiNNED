@@ -23,7 +23,7 @@ export default function Changelog() {
                 <div className="max-w-xl mx-auto px-4 py-8">
                     <div className="mb-2">
                         <Button
-                            className="w-full hover:bg-main hover:text-main-foreground"
+                            className="w-full hover:bg-main hover:text-main-foreground mb-3"
                             variant="neutral"
                             onClick={() =>
                                 setOpenItems(allOpen ? [] : allVersions)
@@ -57,7 +57,7 @@ export default function Changelog() {
                         ))}
                     </Accordion>
                     <Button
-                        className="w-full hover:bg-main hover:text-main-foreground"
+                        className="w-full hover:bg-main hover:text-main-foreground mt-5"
                         variant="neutral"
                         onClick={() => setOpenItems(allOpen ? [] : allVersions)}
                     >
@@ -65,9 +65,13 @@ export default function Changelog() {
                     </Button>
                     <a
                         href="https://github.com/ishpeeedy/PiNNED"
-                        className="underline flex justify-center items-center mt-6 color:var(--foreground)"
+                        className="underline text-xl flex justify-center items-center mt-6 "
+                        target="_blank"
+                        rel="noopener noreferrer"
                     >
-                        <span>Github Repository</span>
+                        <span className="font-bold uppercase">
+                            Click Here to Open the Github Repository
+                        </span>
                         <svg viewBox="0 0 13 20" className="w-4 h-4">
                             <polyline points="0.5 19.5 3 19.5 12.5 10 3 0.5" />
                         </svg>
