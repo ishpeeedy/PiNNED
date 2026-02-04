@@ -133,12 +133,12 @@ export default function Dashboard() {
                                         <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent className="bg-yellow">
+                                <AlertDialogContent className="bg-yellow text-black">
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>
                                             Delete "{board.title}"?
                                         </AlertDialogTitle>
-                                        <AlertDialogDescription>
+                                        <AlertDialogDescription className="text-black">
                                             This action cannot be undone. This
                                             will permanently delete your board
                                             and all its tiles.
