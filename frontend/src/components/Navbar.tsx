@@ -121,30 +121,38 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
                 </button>
 
                 {/* User Menu */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
-                        <Avatar>
-                            <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-400 text-white font-bold">
-                                {user?.name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{user?.name}</span>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuLabel>
-                            <div className="flex flex-col">
-                                <p className="text-sm font-medium">
-                                    {user?.name}
-                                </p>
-                                <p className="text-xs">{user?.email}</p>
-                            </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout}>
-                            Logout
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                {user ? (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
+                            <Avatar>
+                                <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-400 text-white font-bold">
+                                    {user?.name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">{user?.name}</span>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>
+                                <div className="flex flex-col">
+                                    <p className="text-sm font-medium">
+                                        {user?.name}
+                                    </p>
+                                    <p className="text-xs">{user?.email}</p>
+                                </div>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleLogout}>
+                                Logout
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                ) : (
+                    <div>
+                        <a href="/login">Login</a>
+                        {' | '}
+                        <a href="/register">Register</a>
+                    </div>
+                )}
             </div>
         </nav>
     );
