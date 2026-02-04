@@ -43,12 +43,12 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
     return (
         <nav className="bg-secondary-background border-b-4 border-black px-6 h-[60px] flex items-center justify-between gap-4 relative z-10">
             {/* Left: Logo */}
-            <div
-                onClick={() => navigate(user ? '/dashboard' : '/')}
+            <a
+                href={user ? '/dashboard' : '/'}
                 className="flex items-center cursor-pointer"
             >
-                <img src={logo} alt="PINNED" className="w-auto h-[50px]" />
-            </div>
+                <img src={logo} alt="PINNED_logo" className="w-auto h-[50px]" />
+            </a>
 
             {/* Center: Board Name + Settings (only show on board pages) */}
             {board && (

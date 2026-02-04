@@ -16,10 +16,15 @@ export default function Changelog() {
     const allVersions = changelogData.map((e) => e.version);
     const allOpen = openItems.length === allVersions.length;
 
+    // Back to Top handler
+    const handleBackToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar />
-            <main className="flex-1 grid-pattern">
+            <main className="flex-1 grid-pattern relative">
                 <div className="max-w-xl mx-auto px-4 py-8">
                     <div className="mb-2">
                         <Button
@@ -77,6 +82,14 @@ export default function Changelog() {
                         </svg>
                     </a>
                 </div>
+                {/* Back to Top Button */}
+                <Button
+                    onClick={handleBackToTop}
+                    className="fixed bottom-8 right-10 bottom-10 z-50 transition-all"
+                    aria-label="Back to Top"
+                >
+                    ↑ Back to Top
+                </Button>
             </main>
             <Footer />
         </div>

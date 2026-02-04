@@ -98,7 +98,7 @@ export default function Dashboard() {
         const handleDelete = (e: React.MouseEvent) => {
             e.stopPropagation();
         };
-
+        // ------------------------------------------------BOARD CARD
         return (
             <Card
                 className="group cursor-pointer shadow-shadow"
@@ -168,14 +168,14 @@ export default function Dashboard() {
             </Card>
         );
     };
-
+    // ---------------------------------------------------ACTUAL RETURN
     return (
         <div className="min-h-screen flex flex-col">
             <Navbar />
 
-            <div className="flex-1 grid-pattern">
+            <div className="flex-1 grid-pattern flex-col flex-1">
                 {/* Main Content */}
-                <div className="max-w-7xl mx-auto px-6 py-8 relative z-10 w-full">
+                <div className="max-w-7xl mx-auto px-6 py-8 relative z-10 w-full ">
                     <div className="space-y-12">
                         {/* Create New Board */}
                         <Button
@@ -211,7 +211,7 @@ export default function Dashboard() {
                         {/* Search Bar */}
                         <section>
                             <div className="relative max-full">
-                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-foreground/60" />
+                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-foreground/60 " />
                                 <Input
                                     type="text"
                                     placeholder="Search boards..."
@@ -219,7 +219,7 @@ export default function Dashboard() {
                                     onChange={(e) =>
                                         setSearchQuery(e.target.value)
                                     }
-                                    className="pl-12 text-lg h-14"
+                                    className="pl-12 text-lg h-14  dark:border-white"
                                 />
                             </div>
                         </section>
@@ -258,8 +258,8 @@ export default function Dashboard() {
                         </section>
                     </div>
                 </div>
-                <Footer />
             </div>
+            <Footer />
         </div>
     );
 }
