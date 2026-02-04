@@ -201,13 +201,6 @@ export default function Landing() {
             history.scrollRestoration = 'manual';
         }
         window.scrollTo(0, 0);
-
-        return () => {
-            // Restore browser scroll restoration for other pages
-            if ('scrollRestoration' in history) {
-                history.scrollRestoration = 'auto';
-            }
-        };
     }, []);
 
     // Preload the hero image
@@ -299,41 +292,7 @@ export default function Landing() {
         }
 
         return () => {
-            // Kill all ScrollTrigger instances FIRST while DOM nodes still exist
             ScrollTrigger.getAll().forEach((t) => t.kill());
-            // Then disable normalizeScroll
-            ScrollTrigger.normalizeScroll(false);
-            // Clear any residual inline styles GSAP may have left
-            if (container) {
-                gsap.set(container, { clearProps: 'all' });
-            }
-            if (section) {
-                section.style.cssText = '';
-            }
-            // Remove any pin-spacer wrappers left behind
-            document.querySelectorAll('.pin-spacer').forEach((el) => {
-                const parent = el.parentNode;
-                if (parent) {
-                    while (el.firstChild) {
-                        parent.insertBefore(el.firstChild, el);
-                    }
-                    parent.removeChild(el);
-                }
-            });
-            // Clear only GSAP-specific inline styles from body/html (overflow, height, position)
-            const gsapProps = [
-                'overflow',
-                'height',
-                'position',
-                'top',
-                'left',
-                'width',
-            ];
-            gsapProps.forEach((prop) => {
-                document.body.style.removeProperty(prop);
-                document.documentElement.style.removeProperty(prop);
-            });
-            window.scrollTo(0, 0);
         };
     }, []);
 
