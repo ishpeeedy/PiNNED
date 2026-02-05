@@ -12,10 +12,10 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Changelog from './pages/Changelog';
-import BoardSettings from './pages/BoardSettings';
+import NotFound from './pages/NotFound.tsx';
 
+const BoardSettings = lazy(() => import('./pages/BoardSettings'));
 const Board = lazy(() => import('./pages/Board'));
-const NotFound = lazy(() => import('./pages/NotFound'));
 
 import { useAuthStore } from './stores/authStore';
 
