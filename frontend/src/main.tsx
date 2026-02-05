@@ -7,14 +7,15 @@ import ScrollToTop from './components/ScrollToTop.tsx';
 import Loader from './components/Loader.tsx';
 import '../global.css';
 
-const Home = lazy(() => import('./pages/Home.tsx'));
-const Login = lazy(() => import('./pages/Login.tsx'));
-const Register = lazy(() => import('./pages/Register.tsx'));
-const Dashboard = lazy(() => import('./pages/Dashboard.tsx'));
-const Changelog = lazy(() => import('./pages/Changelog.tsx'));
-const Board = lazy(() => import('./pages/Board.tsx'));
-const BoardSettings = lazy(() => import('./pages/BoardSettings.tsx'));
-const NotFound = lazy(() => import('./pages/NotFound.tsx'));
+import Home from './pages/Home';
+import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Changelog from './pages/Changelog';
+import BoardSettings from './pages/BoardSettings';
+
+const Board = lazy(() => import('./pages/Board'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 import { useAuthStore } from './stores/authStore';
 
@@ -29,7 +30,14 @@ function App() {
         <>
             <ScrollToTop />
             <Toaster position="bottom-right" />
-            <Suspense fallback={<Loader />}>
+            <Suspense
+                fallback={
+                    <div className="min-h-screen flex items-center justify-center">
+                        <Loader />
+                    </div>
+                }
+            >
+                {' '}
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route
