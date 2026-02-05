@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
+import Pinwheel from '@/components/pinwheel/Pinwheel';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -105,6 +106,23 @@ export default function Login() {
                     </form>
                 </Card>
             </main>
+
+            {/* Pinwheels — fixed at bottom, hidden on small screens */}
+            <div
+                className="fixed bottom-13 left-0 w-full h-0 pointer-events-none z-[1] hidden lg:block"
+                aria-hidden="true"
+            >
+                <Pinwheel className="absolute bottom-0 left-[4%]" speed={7} />
+                <Pinwheel className="absolute bottom-0 left-[14%]" speed={9} />
+                <Pinwheel className="absolute bottom-0 left-[24%]" speed={9} />
+                <Pinwheel className="absolute bottom-0 right-[4%]" speed={6} />
+                <Pinwheel
+                    className="absolute bottom-0 right-[14%]"
+                    speed={10}
+                />
+                <Pinwheel className="absolute bottom-0 right-[24%]" speed={6} />
+            </div>
+
             <Footer />
         </div>
     );

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import Pinwheel from '@/components/pinwheel/Pinwheel';
+
 import {
     Accordion,
     AccordionContent,
@@ -16,7 +18,6 @@ export default function Changelog() {
     const allVersions = changelogData.map((e) => e.version);
     const allOpen = openItems.length === allVersions.length;
 
-    // Back to Top handler
     const handleBackToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -24,7 +25,7 @@ export default function Changelog() {
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar />
-            <main className="flex-1 grid-pattern relative">
+            <main className="flex-1 grid-pattern">
                 <div className="max-w-xl mx-auto px-4 py-8">
                     <div className="mb-2">
                         <Button
@@ -82,14 +83,45 @@ export default function Changelog() {
                         </svg>
                     </a>
                 </div>
-                {/* Back to Top Button */}
-                <Button
-                    onClick={handleBackToTop}
-                    className="fixed bottom-8 right-10 bottom-10 z-50 transition-all"
-                    aria-label="Back to Top"
+
+                {/* Sticky row — pinwheels + back to top button */}
+                <div
+                    className="sticky bottom-0 w-full h-0 pointer-events-none z-[1] hidden lg:block"
+                    aria-hidden="true"
                 >
-                    ↑ Back to Top
-                </Button>
+                    <Pinwheel
+                        className="absolute bottom-0 left-[4%]"
+                        speed={7}
+                    />
+                    <Pinwheel
+                        className="absolute bottom-0 left-[14%]"
+                        speed={9}
+                    />
+                    <Pinwheel
+                        className="absolute bottom-0 right-[4%]"
+                        speed={6}
+                    />
+                    <Pinwheel
+                        className="absolute bottom-0 left-[24%]"
+                        speed={9}
+                    />
+                    <Pinwheel
+                        className="absolute bottom-0 right-[24%]"
+                        speed={6}
+                    />
+                    <Pinwheel
+                        className="absolute bottom-0 right-[14%]"
+                        speed={10}
+                    />
+                    <Button
+                        onClick={handleBackToTop}
+                        className="absolute bottom-10 right-30 pointer-events-auto z-[2]"
+                        aria-label="Back to Top"
+                        aria-hidden="false"
+                    >
+                        ↑
+                    </Button>
+                </div>
             </main>
             <Footer />
         </div>
