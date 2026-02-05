@@ -4,7 +4,7 @@ import Loader from '@/components/Loader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import landingImg from '@/assets/landing1.jpg';
+import { ScrollSmoother } from 'gsap/ScrollSmoother';
 import Toolbar from '@/components/Toolbar';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -21,7 +21,9 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { carouselBoards } from '@/data/carouselData';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+const landingImg =
+    'https://res.cloudinary.com/dzwjyg2ai/image/upload/w_1920,f_auto,q_auto/v1772374043/IMP_Resources/jj-ying-9Qwbfa_RM94-unsplash_jujqzs.jpg';
 
 // Static tile mockups — styled to match real tiles (Card: border-2 border-border rounded-base)
 const TileShell = ({
@@ -155,6 +157,7 @@ const TemplateCarousel = () => {
                                     src={board.img}
                                     alt={board.title}
                                     className="w-full h-[240px] object-cover"
+                                    loading="lazy"
                                 />
                                 <CardContent className="p-4 flex flex-col gap-3 flex-1">
                                     <div className="flex items-center gap-2">
@@ -186,9 +189,10 @@ const TemplateCarousel = () => {
 };
 
 export default function Landing() {
+    const smoothWrapperRef = useRef<HTMLDivElement>(null);
+    const smoothContentRef = useRef<HTMLDivElement>(null);
     const sectionRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const imgRef = useRef<HTMLImageElement>(null);
     const gridRef = useRef<HTMLDivElement>(null);
     const bentoRef = useRef<HTMLElement>(null);
 
@@ -215,30 +219,38 @@ export default function Landing() {
         }
     }, []);
 
+    // ScrollSmoother — buttery smooth scroll with lerp
+    useEffect(() => {
+        if (!smoothWrapperRef.current || !smoothContentRef.current) return;
+
+        const smoother = ScrollSmoother.create({
+            wrapper: smoothWrapperRef.current,
+            content: smoothContentRef.current,
+            smooth: 1.2,
+            effects: true,
+        });
+
+        return () => smoother.kill();
+    }, []);
+
     useEffect(() => {
         const section = sectionRef.current;
         const container = containerRef.current;
-        const img = imgRef.current;
         const grid = gridRef.current;
-        if (!section || !container || !img || !grid) return;
+        if (!section || !container || !grid) return;
 
         // Chrome (Navbar + Toolbar) is fixed at 60px each = 120px = 3 grid cells
         grid.style.top = '120px';
 
-        ScrollTrigger.normalizeScroll(true);
-
         const tiles = section.querySelectorAll('.mock-tile');
 
-        // Calculate how much to scale the 320×240 container to fill the viewport
         const vw = window.innerWidth;
         const vh = window.innerHeight;
-        const startScale = Math.max(vw / 320, vh / 240);
 
-        // Set initial scale via GSAP so it fills the screen
-        gsap.set(container, {
-            scale: startScale,
-            willChange: 'transform',
-        });
+        // Container is 100vw × 100vh in CSS, anchored top-left.
+        // Final tile is 560×320 to reduce squish.
+        const endScaleX = 560 / vw;
+        const endScaleY = 320 / vh;
 
         const tl = gsap.timeline({
             scrollTrigger: {
@@ -251,18 +263,19 @@ export default function Landing() {
             },
         });
 
-        // Phase 1 (0 → 0.5): scale down to tile size + grid fade in
+        // Phase 1 (0 → 0.5): scale down to tile size + slide into position + grid fade in
         tl.to(
             container,
             {
-                scale: 1,
+                scaleX: endScaleX,
+                scaleY: endScaleY,
+                x: 480,
+                y: 240,
                 borderRadius: '4px',
                 ease: 'none',
             },
             0
-        )
-            .to(img, { scale: 1.01, ease: 'none' }, 0)
-            .to(grid, { opacity: 1, ease: 'none' }, 0);
+        ).to(grid, { opacity: 1, ease: 'none' }, 0);
 
         // Phase 2 (0.5 → 1): surrounding tiles stagger in
         tl.fromTo(
@@ -308,316 +321,317 @@ export default function Landing() {
                 />
             )}
 
-            <div
-                ref={sectionRef}
-                className="relative w-full h-screen flex items-center justify-center bg-background overflow-hidden"
-            >
-                {/* Navbar + toolbar sit behind the fullscreen image (z-[5] < z-10) */}
-                <div className="absolute top-0 left-0 right-0 z-[5]">
-                    <Navbar />
-                    <Toolbar />
-                </div>
-
-                {/* Grid fades in — starts below the chrome */}
-                <div
-                    ref={gridRef}
-                    className="absolute inset-x-0 bottom-0 grid-pattern opacity-0"
-                />
-
-                {/* Airbnb listing — top left */}
-                <div
-                    className="mock-tile opacity-0 absolute"
-                    style={{ top: '120px', left: '40px' }}
-                >
-                    <MockLinkTile
-                        url="airbnb.com · Minato-ku, Tokyo"
-                        title="Hotel in Minato-ku · ★4.69 · 1 bedroom"
-                        description="MANGA Design · 1 bed · Free simple breakfast · 4 station access"
-                        favicon="https://a0.muscache.com/airbnb/static/icons/android-icon-192x192-c0465f9f0380893768972a31a614b670.png"
-                        thumbnail="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_400,f_auto,q_auto/v1771518160/IMP_Resources/2b0f280b-42be-4cac-9eae-9c3281a256c2_yspeiz.avif"
-                    />
-                </div>
-
-                {/* Pros/cons text tile — near Airbnb */}
-                <div
-                    className="mock-tile opacity-0 absolute"
-                    style={{
-                        top: '160px',
-                        left: '280px',
-                    }}
-                >
-                    <MockTextTile
-                        title="Minato-ku Airbnb"
-                        body={
-                            '✅ Manga theme — unique stay\n✅ Free breakfast included\n✅ 4 stations nearby\n❌ Pricey for the size'
-                        }
-                    />
-                </div>
-
-                {/* Yasuo Building — top right */}
-                <div
-                    className="mock-tile opacity-0 absolute"
-                    style={{ top: '120px', right: '120px' }}
-                >
-                    <MockImageTile
-                        src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518162/IMP_Resources/pexels-photo-5544961_bbsgqw.jpg"
-                        caption="Nakagin Capsule Tower · Shimbashi · Brutalist icon, 1972"
-                    />
-                </div>
-
-                {/* Must Visit header tile — above the bottom-right pair */}
-                <div
-                    className="mock-tile opacity-0 absolute"
-                    style={{
-                        top: '360px',
-                        right: '80px',
-                        zIndex: 2,
-                    }}
-                >
-                    <MockTextTile
-                        className="w-[400px]"
-                        title="Must Visit! 📍"
-                        body={
-                            "Two architectural icons, 15 min apart — the National Art Center's rippling glass facade (Kurokawa, 2007) and Fuji TV's titanium sphere floating above Odaiba (Tange, 1997).\nBudget at least half a day to visit them both."
-                        }
-                    />
-                </div>
-                <div
-                    className="mock-tile opacity-0 absolute"
-                    style={{
-                        top: '560px',
-                        right: '560px',
-                        zIndex: 2,
-                    }}
-                >
-                    <MockTextTile
-                        className="w-[400px] h-[80px]"
-                        title="Japan Trip Ideas 🌸"
-                        body={
-                            'Cherry blossoms in Kyoto · Ramen in Sapporo · Capsule hotel in Tokyo · Ribbon Chapel · Fuji TV HQ · National Art Center · Nakagin Capsule Tower \n Possibly some trekking as well'
-                        }
-                        style={{
-                            backgroundColor: 'var(--main)',
-                            borderColor: '#000000',
-                        }}
-                    />
-                </div>
-
-                {/* National Art Center — bottom right pair, left tile */}
-                <div
-                    className="mock-tile opacity-0 absolute"
-                    style={{
-                        top: '480px',
-                        right: '40px',
-                        zIndex: 2,
-                    }}
-                >
-                    <MockImageTile
-                        small
-                        src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518161/IMP_Resources/photo_2023-12-14_13-.jpg_jhs6wa.webp"
-                        caption="National Art Center · Roppongi · Kisho Kurokawa, 2007"
-                    />
-                </div>
-
-                {/* Ribbon Chapel — bottom left */}
-                <div
-                    className="mock-tile opacity-0 absolute"
-                    style={{ top: '400px', left: '8%' }}
-                >
-                    <MockImageTile
-                        src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518161/IMP_Resources/Bella-vista201512-02_nmlhb4.jpg"
-                        caption="Ribbon Chapel · Onomichi · Two intertwining staircases, no columns"
-                    />
-                </div>
-
-                {/* Fuji TV HQ — bottom right pair, right tile */}
-                <div
-                    className="mock-tile opacity-0 absolute"
-                    style={{ top: '480px', right: '240px', zIndex: 2 }}
-                >
-                    <MockImageTile
-                        small
-                        src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518161/IMP_Resources/2018_FCG_Headquarters_Building_2_tcg9wi.jpg"
-                        caption="Fuji TV HQ · Odaiba · Kenzo Tange, 1997"
-                    />
-                </div>
-
-                {/* Center image tile — zooms out from fullscreen */}
-                <div
-                    ref={containerRef}
-                    className="absolute overflow-hidden z-10 border-2 border-black"
-                    style={{
-                        top: '240px',
-                        left: '560px',
-                        width: '400px',
-                        height: '320px',
-                        transformOrigin: 'center center',
-                    }}
-                >
-                    <img
-                        ref={imgRef}
-                        src={landingImg}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                        style={{
-                            transform: 'scale(1)',
-                            transformOrigin: 'center center',
-                            willChange: 'transform',
-                            backfaceVisibility: 'hidden',
-                        }}
-                    />
-                </div>
-            </div>
-
-            <Marquee
-                items={[
-                    'Drag & Drop Images',
-                    '·',
-                    'Link Metadata Fetching',
-                    '·',
-                    'Image uploads',
-                    '·',
-                    'Undo History',
-                    '·',
-                    'Color Palettes',
-                    '·',
-                    'Auto-save',
-                    '·',
-                    'Easy Resize',
-                    '·',
-                    'Infinite canvas',
-                    '·',
-                ]}
-            />
-
-            {/* Bento section */}
-            <section
-                ref={bentoRef}
-                className="relative w-full py-10 px-5 bg-background overflow-hidden isometric-dots"
-            >
-                <div className="max-w-4xl mx-auto flex flex-col gap-1">
-                    <p className="text-xs font-bold uppercase tracking-widest text-foreground/50">
-                        everything you need
-                    </p>
-
+            <div id="smooth-wrapper" ref={smoothWrapperRef}>
+                <div id="smooth-content" ref={smoothContentRef}>
                     <div
-                        className="grid grid-cols-3 gap-3"
-                        style={{ gridTemplateRows: '260px 180px' }}
+                        ref={sectionRef}
+                        className="relative w-full h-screen flex items-center justify-center bg-background overflow-hidden"
                     >
-                        {/* Big cell — spatial canvas */}
-                        <div className="bento-cell col-start-1 col-end-3 border-2 border-black rounded-base bg-black text-white p-8 flex flex-col justify-between overflow-hidden relative">
-                            {/* Mini canvas mockup */}
-                            <div
-                                className="absolute inset-0 opacity-10"
+                        {/* Navbar + toolbar sit behind the fullscreen image (z-[5] < z-10) */}
+                        <div className="absolute top-0 left-0 right-0 z-[5]">
+                            <Navbar />
+                            <Toolbar />
+                        </div>
+
+                        {/* Grid fades in — starts below the chrome */}
+                        <div
+                            ref={gridRef}
+                            className="absolute inset-x-0 bottom-0 grid-pattern opacity-0"
+                        />
+
+                        {/* Airbnb listing — top left */}
+                        <div
+                            className="mock-tile opacity-0 absolute"
+                            style={{ top: '120px', left: '40px' }}
+                        >
+                            <MockLinkTile
+                                url="airbnb.com · Minato-ku, Tokyo"
+                                title="Hotel in Minato-ku · ★4.69 · 1 bedroom"
+                                description="MANGA Design · 1 bed · Free simple breakfast · 4 station access"
+                                favicon="https://a0.muscache.com/airbnb/static/icons/android-icon-192x192-c0465f9f0380893768972a31a614b670.png"
+                                thumbnail="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_400,f_auto,q_auto/v1771518160/IMP_Resources/2b0f280b-42be-4cac-9eae-9c3281a256c2_yspeiz.avif"
+                            />
+                        </div>
+
+                        {/* Pros/cons text tile — near Airbnb */}
+                        <div
+                            className="mock-tile opacity-0 absolute"
+                            style={{
+                                top: '160px',
+                                left: '280px',
+                            }}
+                        >
+                            <MockTextTile
+                                title="Minato-ku Airbnb"
+                                body={
+                                    '✅ Manga theme — unique stay\n✅ Free breakfast included\n✅ 4 stations nearby\n❌ Pricey for the size'
+                                }
+                            />
+                        </div>
+
+                        {/* Yasuo Building — top right */}
+                        <div
+                            className="mock-tile opacity-0 absolute"
+                            style={{ top: '120px', right: '120px' }}
+                        >
+                            <MockImageTile
+                                src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518162/IMP_Resources/pexels-photo-5544961_bbsgqw.jpg"
+                                caption="Nakagin Capsule Tower · Shimbashi · Brutalist icon, 1972"
+                            />
+                        </div>
+
+                        {/* Must Visit header tile — above the bottom-right pair */}
+                        <div
+                            className="mock-tile opacity-0 absolute"
+                            style={{
+                                top: '360px',
+                                right: '80px',
+                                zIndex: 2,
+                            }}
+                        >
+                            <MockTextTile
+                                className="w-[400px]"
+                                title="Must Visit! 📍"
+                                body={
+                                    "Two architectural icons, 15 min apart — the National Art Center's rippling glass facade (Kurokawa, 2007) and Fuji TV's titanium sphere floating above Odaiba (Tange, 1997).\nBudget at least half a day to visit them both."
+                                }
+                            />
+                        </div>
+                        <div
+                            className="mock-tile opacity-0 absolute"
+                            style={{
+                                top: '560px',
+                                right: '560px',
+                                zIndex: 2,
+                            }}
+                        >
+                            <MockTextTile
+                                className="w-[400px] h-[80px]"
+                                title="Japan Trip Ideas 🌸"
+                                body={
+                                    'Cherry blossoms in Kyoto · Ramen in Sapporo · Capsule hotel in Tokyo · Ribbon Chapel · Fuji TV HQ · National Art Center · Nakagin Capsule Tower \n Possibly some trekking as well'
+                                }
                                 style={{
-                                    backgroundImage:
-                                        'linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)',
-                                    backgroundSize: '32px 32px',
+                                    backgroundColor: 'var(--main)',
+                                    borderColor: '#000000',
                                 }}
                             />
-                            <div className="relative flex gap-3">
-                                <div className="w-24 h-16 rounded border-2 border-white/40 bg-white/10" />
-                                <div className="w-16 h-20 rounded border-2 border-white/40 bg-white/10 mt-4" />
-                                <div className="w-20 h-14 rounded border-2 border-white/40 bg-white/10 mt-1" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-black leading-tight">
-                                    Your ideas,
-                                    <br />
-                                    laid out how
-                                    <br />
-                                    you think.
-                                </p>
-                                <p className="text-sm text-white/50 mt-2">
-                                    Drag. Drop. Done.
-                                </p>
-                            </div>
                         </div>
 
-                        {/* Link previews */}
-                        <div className="bento-cell col-start-3 col-end-4 border-2 border-black rounded-base bg-[#fff7ed] p-6 flex flex-col justify-between">
-                            <Link2
-                                className="w-7 h-7 text-black"
-                                strokeWidth={2.5}
+                        {/* National Art Center — bottom right pair, left tile */}
+                        <div
+                            className="mock-tile opacity-0 absolute"
+                            style={{
+                                top: '480px',
+                                right: '40px',
+                                zIndex: 2,
+                            }}
+                        >
+                            <MockImageTile
+                                small
+                                src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518161/IMP_Resources/photo_2023-12-14_13-.jpg_jhs6wa.webp"
+                                caption="National Art Center · Roppongi · Kisho Kurokawa, 2007"
                             />
-                            <div>
-                                <p className="font-black text-lg text-black leading-tight">
-                                    Paste a URL.
-                                    <br />
-                                    Get a preview.
-                                </p>
-                                <p className="text-xs text-black/50 mt-1">
-                                    Title, description, thumbnail —
-                                    auto-fetched.
-                                </p>
-                            </div>
                         </div>
 
-                        {/* Image upload */}
-                        <div className="bento-cell col-start-1 col-end-2 border-2 border-black rounded-base bg-[#e0f2fe] p-6 flex flex-col justify-between">
-                            <ImageIcon
-                                className="w-7 h-7 text-black"
-                                strokeWidth={2.5}
+                        {/* Ribbon Chapel — bottom left */}
+                        <div
+                            className="mock-tile opacity-0 absolute"
+                            style={{ top: '400px', left: '8%' }}
+                        >
+                            <MockImageTile
+                                src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518161/IMP_Resources/Bella-vista201512-02_nmlhb4.jpg"
+                                caption="Ribbon Chapel · Onomichi · Two intertwining staircases, no columns"
                             />
-                            <div>
-                                <p className="font-black text-lg text-black leading-tight">
-                                    Drag images
-                                    <br />
-                                    right in.
-                                </p>
-                                <p className="text-xs text-black/50 mt-1">
-                                    From desktop or upload. Stored on
-                                    Cloudinary.
-                                </p>
-                            </div>
                         </div>
 
-                        {/* Undo + autosave */}
-                        <div className="bento-cell col-start-2 col-end-3 border-2 border-black rounded-base bg-[#dcfce7] p-6 flex flex-col justify-between">
-                            <Undo2
-                                className="w-7 h-7 text-black"
-                                strokeWidth={2.5}
+                        {/* Fuji TV HQ — bottom right pair, right tile */}
+                        <div
+                            className="mock-tile opacity-0 absolute"
+                            style={{ top: '480px', right: '240px', zIndex: 2 }}
+                        >
+                            <MockImageTile
+                                small
+                                src="https://res.cloudinary.com/dzwjyg2ai/image/upload/w_600,f_auto,q_auto/v1771518161/IMP_Resources/2018_FCG_Headquarters_Building_2_tcg9wi.jpg"
+                                caption="Fuji TV HQ · Odaiba · Kenzo Tange, 1997"
                             />
-                            <div>
-                                <p className="font-black text-lg text-black leading-tight">
-                                    Auto-saves.
-                                    <br />
-                                    Ctrl+Z always
-                                    <br />
-                                    works.
-                                </p>
-                                <p className="text-xs text-black/50 mt-1">
-                                    Full undo history, zero manual saving.
-                                </p>
-                            </div>
                         </div>
 
-                        {/* Color */}
-                        <div className="bento-cell col-start-3 col-end-4 border-2 border-black rounded-base bg-[#fae8ff] p-6 flex flex-col justify-between">
-                            <Palette
-                                className="w-7 h-7 text-black"
-                                strokeWidth={2.5}
+                        {/* Center image tile — starts fullscreen, shrinks via transforms */}
+                        <div
+                            ref={containerRef}
+                            className="absolute overflow-hidden z-10 border-2 border-black"
+                            style={{
+                                top: 0,
+                                left: 0,
+                                width: '100vw',
+                                height: '100vh',
+                                transformOrigin: 'top left',
+                                willChange: 'transform',
+                            }}
+                        >
+                            <img
+                                src={landingImg}
+                                alt="Preview"
+                                className="w-full h-full object-cover"
                             />
-                            <div>
-                                <p className="font-black text-lg text-black leading-tight">
-                                    Your palette,
-                                    <br />
-                                    your rules.
-                                </p>
-                                <p className="text-xs text-black/50 mt-1">
-                                    Color every tile however you want.
-                                </p>
-                            </div>
                         </div>
                     </div>
-                </div>
-            </section>
 
-            {/* Carousel section */}
-            <section className="relative w-full py-10 overflow-hidden bg-secondary-background grid-pattern">
-                <TemplateCarousel />
-            </section>
-            <Footer />
+                    <Marquee
+                        items={[
+                            'Drag & Drop Images',
+                            '·',
+                            'Link Metadata Fetching',
+                            '·',
+                            'Image uploads',
+                            '·',
+                            'Undo History',
+                            '·',
+                            'Color Palettes',
+                            '·',
+                            'Auto-save',
+                            '·',
+                            'Easy Resize',
+                            '·',
+                            'Infinite canvas',
+                            '·',
+                        ]}
+                    />
+
+                    {/* Bento section */}
+                    <section
+                        ref={bentoRef}
+                        className="relative w-full py-10 px-5 bg-background overflow-hidden isometric-dots"
+                    >
+                        <div className="max-w-4xl mx-auto flex flex-col gap-1">
+                            <p className="text-xs font-bold uppercase tracking-widest text-foreground/50">
+                                everything you need
+                            </p>
+
+                            <div
+                                className="grid grid-cols-3 gap-3"
+                                style={{ gridTemplateRows: '260px 180px' }}
+                            >
+                                {/* Big cell — spatial canvas */}
+                                <div className="bento-cell col-start-1 col-end-3 border-2 border-black rounded-base bg-black text-white p-8 flex flex-col justify-between overflow-hidden relative">
+                                    {/* Mini canvas mockup */}
+                                    <div
+                                        className="absolute inset-0 opacity-10"
+                                        style={{
+                                            backgroundImage:
+                                                'linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)',
+                                            backgroundSize: '32px 32px',
+                                        }}
+                                    />
+                                    <div className="relative flex gap-3">
+                                        <div className="w-24 h-16 rounded border-2 border-white/40 bg-white/10" />
+                                        <div className="w-16 h-20 rounded border-2 border-white/40 bg-white/10 mt-4" />
+                                        <div className="w-20 h-14 rounded border-2 border-white/40 bg-white/10 mt-1" />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl font-black leading-tight">
+                                            Your ideas,
+                                            <br />
+                                            laid out how
+                                            <br />
+                                            you think.
+                                        </p>
+                                        <p className="text-sm text-white/50 mt-2">
+                                            Drag. Drop. Done.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Link previews */}
+                                <div className="bento-cell col-start-3 col-end-4 border-2 border-black rounded-base bg-[#fff7ed] p-6 flex flex-col justify-between">
+                                    <Link2
+                                        className="w-7 h-7 text-black"
+                                        strokeWidth={2.5}
+                                    />
+                                    <div>
+                                        <p className="font-black text-lg text-black leading-tight">
+                                            Paste a URL.
+                                            <br />
+                                            Get a preview.
+                                        </p>
+                                        <p className="text-xs text-black/50 mt-1">
+                                            Title, description, thumbnail —
+                                            auto-fetched.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Image upload */}
+                                <div className="bento-cell col-start-1 col-end-2 border-2 border-black rounded-base bg-[#e0f2fe] p-6 flex flex-col justify-between">
+                                    <ImageIcon
+                                        className="w-7 h-7 text-black"
+                                        strokeWidth={2.5}
+                                    />
+                                    <div>
+                                        <p className="font-black text-lg text-black leading-tight">
+                                            Drag images
+                                            <br />
+                                            right in.
+                                        </p>
+                                        <p className="text-xs text-black/50 mt-1">
+                                            From desktop or upload. Stored on
+                                            Cloudinary.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Undo + autosave */}
+                                <div className="bento-cell col-start-2 col-end-3 border-2 border-black rounded-base bg-[#dcfce7] p-6 flex flex-col justify-between">
+                                    <Undo2
+                                        className="w-7 h-7 text-black"
+                                        strokeWidth={2.5}
+                                    />
+                                    <div>
+                                        <p className="font-black text-lg text-black leading-tight">
+                                            Auto-saves.
+                                            <br />
+                                            Ctrl+Z always
+                                            <br />
+                                            works.
+                                        </p>
+                                        <p className="text-xs text-black/50 mt-1">
+                                            Full undo history, zero manual
+                                            saving.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Color */}
+                                <div className="bento-cell col-start-3 col-end-4 border-2 border-black rounded-base bg-[#fae8ff] p-6 flex flex-col justify-between">
+                                    <Palette
+                                        className="w-7 h-7 text-black"
+                                        strokeWidth={2.5}
+                                    />
+                                    <div>
+                                        <p className="font-black text-lg text-black leading-tight">
+                                            Your palette,
+                                            <br />
+                                            your rules.
+                                        </p>
+                                        <p className="text-xs text-black/50 mt-1">
+                                            Color every tile however you want.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Carousel section */}
+                    <section className="relative w-full py-10 overflow-hidden bg-secondary-background grid-pattern">
+                        <TemplateCarousel />
+                    </section>
+                    <Footer />
+                </div>
+                {/* smooth-content */}
+            </div>
+            {/* smooth-wrapper */}
         </>
     );
 }
