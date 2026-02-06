@@ -230,7 +230,20 @@ export default function Landing() {
             effects: true,
         });
 
-        return () => smoother.kill();
+        return () => {
+            smoother.kill();
+            // Reset body scroll lock set by ScrollSmoother
+            document.body.style.overflow = '';
+            document.body.style.height = '';
+            document.documentElement.style.overflow = '';
+            // Clear the transform ScrollSmoother applies to the content wrapper
+            if (smoothContentRef.current) {
+                smoothContentRef.current.style.transform = '';
+                smoothContentRef.current.style.willChange = '';
+            }
+            // Restore native scroll position to top
+            window.scrollTo(0, 0);
+        };
     }, []);
 
     useEffect(() => {
@@ -306,6 +319,16 @@ export default function Landing() {
 
         return () => {
             ScrollTrigger.getAll().forEach((t) => t.kill());
+            ScrollTrigger.clearScrollMemory();
+            // Reset any pinned element styles left behind
+            if (sectionRef.current) {
+                sectionRef.current.style.position = '';
+                sectionRef.current.style.top = '';
+            }
+            if (containerRef.current) {
+                containerRef.current.style.transform = '';
+                containerRef.current.style.clipPath = '';
+            }
         };
     }, []);
 

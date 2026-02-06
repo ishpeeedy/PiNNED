@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Settings, Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
@@ -43,12 +43,12 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
     return (
         <nav className="bg-secondary-background border-b-4 border-black px-6 h-[60px] flex items-center justify-between gap-4 sticky top-0 z-50">
             {/* Left: Logo */}
-            <a
-                href={user ? '/dashboard' : '/'}
+            <Link
+                to={user ? '/dashboard' : '/'}
                 className="flex items-center cursor-pointer"
             >
                 <img src={logo} alt="PINNED_logo" className="w-auto h-[50px]" />
-            </a>
+            </Link>
 
             {/* Center: Board Name + Settings (only show on board pages) */}
             {board && (
@@ -148,8 +148,8 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
                     </DropdownMenu>
                 ) : (
                     <div className="dark:text-[var(--main)]">
-                        <a href="/login">Login |</a>
-                        <a href="/register">{' Register'}</a>
+                        <Link to="/login">Login |</Link>
+                        <Link to="/register">{' Register'}</Link>
                     </div>
                 )}
             </div>
