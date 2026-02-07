@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import Loader from '@/components/Loader';
 import { Button } from '@/components/ui/button';
@@ -176,7 +177,7 @@ const TemplateCarousel = () => {
                                         size="sm"
                                         className="w-full"
                                     >
-                                        <a href="/register">Try now!</a>
+                                        <Link to="/register">Try now!</Link>
                                     </Button>
                                 </CardContent>
                             </Card>

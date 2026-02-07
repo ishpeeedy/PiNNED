@@ -111,19 +111,17 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
             );
 
             const imageUrl = response.data.url;
-            console.log('Upload successful, image URL:', imageUrl);
+            const cloudinaryPublicId = response.data.publicId;
 
-            // Update tile with image URL
+            // Update tile with image URL and Cloudinary public ID
             if (onUpdate) {
-                console.log('Calling onUpdate with imageUrl:', imageUrl);
                 onUpdate({
                     data: {
                         ...(tile.data || {}),
                         imageUrl,
+                        cloudinaryPublicId,
                     },
                 });
-            } else {
-                console.log('onUpdate is not defined!');
             }
 
             toast.success('Image uploaded successfully');

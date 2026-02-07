@@ -44,6 +44,7 @@ export interface Tile {
         header?: string;
         text?: string;
         imageUrl?: string;
+        cloudinaryPublicId?: string;
         caption?: string;
         linkUrl?: string;
         linkTitle?: string;
@@ -95,6 +96,7 @@ export interface CreateTileData {
         header?: string;
         text?: string;
         imageUrl?: string;
+        cloudinaryPublicId?: string;
         caption?: string;
         linkUrl?: string;
         linkTitle?: string;

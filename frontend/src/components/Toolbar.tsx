@@ -49,8 +49,6 @@ const Toolbar = ({
     onBringToFront,
     onSendToBack,
 }: ToolbarProps) => {
-    console.log('Toolbar isDeleteMode:', isDeleteMode);
-
     const handleCreateTile = (type: 'text' | 'image' | 'link') => {
         if (isDeleteMode) {
             toast.error('Exit delete mode first');

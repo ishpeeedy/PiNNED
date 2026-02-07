@@ -20,6 +20,7 @@ export interface ITile extends Document {
         header?: string;
         text?: string;
         imageUrl?: string;
+        cloudinaryPublicId?: string;
         caption?: string;
         linkUrl?: string;
         linkTitle?: string;

@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import Tile from '../models/tile.ts';
 import Board from '../models/board.ts';
 import { authenticateToken } from '../middleware/auth';
+import cloudinary from '../config/cloudinary';
 
 const router = express.Router();
 
@@ -131,6 +132,11 @@ router.delete(
             if (!board || board.userId.toString() !== req.user?.userId) {
                 return res.status(403).json({ message: 'Access denied' });
             }
+            // Delete associated Cloudinary image if present
+            if (tile.type === 'image' && tile.data?.cloudinaryPublicId) {
+                await cloudinary.uploader.destroy(tile.data.cloudinaryPublicId);
+            }
+
             await Tile.findByIdAndDelete(id);
 
             // Update board's updatedAt timestamp and decrement tile count
