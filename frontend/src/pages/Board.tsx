@@ -187,8 +187,6 @@ const Board = () => {
     const handleCreateTile = async (type: 'text' | 'image' | 'link') => {
         if (!id) return;
 
-        console.log('Creating tile:', type);
-
         try {
             // Default tile size
             const defaultSize = {
@@ -203,8 +201,6 @@ const Board = () => {
                 y: 200,
             };
 
-            console.log('Tile data:', { type, position, size: defaultSize });
-
             const newTile = await tileAPI.createTile(id, {
                 type,
                 position,
@@ -217,7 +213,6 @@ const Board = () => {
                 data: {},
             });
 
-            console.log('Tile created:', newTile);
             const newTiles = [...tiles, newTile];
             setTiles(newTiles);
             saveToHistory(newTiles);
@@ -231,8 +226,6 @@ const Board = () => {
     const handleTileUpdate = async (tileId: string, updates: Partial<Tile>) => {
         if (!id) return;
 
-        console.log('handleTileUpdate called:', { tileId, updates });
-
         // Optimistic update - update UI immediately
         const optimisticTiles = tiles.map((tile) =>
             tile._id === tileId ? { ...tile, ...updates } : tile
@@ -243,7 +236,6 @@ const Board = () => {
         // Then sync with backend
         try {
             await tileAPI.updateTile(id, tileId, updates);
-            console.log('Tile updated successfully');
         } catch (error) {
             console.error('Failed to update tile:', error);
             toast.error('Failed to update tile');

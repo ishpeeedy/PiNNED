@@ -19,8 +19,6 @@ const ImageTile = ({ tile, onUpdate }: ImageTileProps) => {
     const captionInputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    console.log('ImageTile rendering:', { imageUrl, data: tile.data });
-
     // Reset imageLoaded when URL changes
     useEffect(() => {
         setImageLoaded(false);
