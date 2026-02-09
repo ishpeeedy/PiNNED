@@ -47,7 +47,7 @@ export default function Login() {
             <main className="flex-1 flex items-center justify-center grid-pattern">
                 <Card className="mt-[-20px] mr-[14px] w-[400px] shadow-shadow">
                     <CardHeader>
-                        <CardTitle>Login to PINNED</CardTitle>
+                        <CardTitle>Login to PiNNED</CardTitle>
                         <CardDescription>
                             Enter your email below to login to your account
                         </CardDescription>

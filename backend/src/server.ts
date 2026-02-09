@@ -40,7 +40,7 @@ app.use('/api/metadata', metadataRoutes);
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
-        message: 'PINNED API is running smoothly',
+        message: 'PiNNED backend is running smoothly',
         timestamp: new Date().toISOString(),
     });
 });

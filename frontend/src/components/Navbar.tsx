@@ -47,7 +47,7 @@ const Navbar = ({ board, onBoardUpdate }: NavbarProps) => {
                 to={user ? '/dashboard' : '/'}
                 className="flex items-center cursor-pointer"
             >
-                <img src={logo} alt="PINNED_logo" className="w-auto h-[50px]" />
+                <img src={logo} alt="PiNNED_logo" className="w-auto h-[50px]" />
             </Link>
 
             {/* Center: Board Name + Settings (only show on board pages) */}

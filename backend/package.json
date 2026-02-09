@@ -1,7 +1,7 @@
 {
     "name": "pinned-backend",
     "version": "1.0.0",
-    "description": "Backend API for PINNED",
+    "description": "Backend API for PiNNED",
     "main": "dist/server.js",
     "type": "module",
     "scripts": {

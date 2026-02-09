@@ -208,6 +208,11 @@ export default function Landing() {
         window.scrollTo(0, 0);
     }, []);
 
+    // Wake up the backend on home page load so login is fast
+    useEffect(() => {
+        fetch(`${import.meta.env.VITE_API_URL}/api/health`).catch(() => {});
+    }, []);
+
     // Preload the hero image
     useEffect(() => {
         const img = new Image();

@@ -50,7 +50,7 @@ export default function Register() {
                     <CardHeader>
                         <CardTitle>Create an account</CardTitle>
                         <CardDescription>
-                            Enter your information to create your PINNED account
+                            Enter your information to create your PiNNED account
                         </CardDescription>
                     </CardHeader>
                     <form onSubmit={handleSubmit}>
