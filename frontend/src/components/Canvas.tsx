@@ -17,6 +17,9 @@ interface CanvasProps {
     zoom?: number;
     background?: BoardBackground;
     onTileClick?: (tileId: string) => void;
+    searchMatchIds?: Set<string>;
+    focusedSearchId?: string | null;
+    targetPan?: { x: number; y: number; version: number } | null;
 }
 
 const Canvas = ({
@@ -28,6 +31,9 @@ const Canvas = ({
     zoom = 1,
     background,
     onTileClick,
+    searchMatchIds = new Set<string>(),
+    focusedSearchId = null,
+    targetPan = null,
 }: CanvasProps) => {
     const canvasRef = useRef<HTMLDivElement>(null);
     const panContainerRef = useRef<HTMLDivElement>(null);
@@ -141,6 +147,28 @@ const Canvas = ({
     useEffect(() => {
         panRef.current = pan;
     }, [pan]);
+
+    // Jump to search result when targetPan changes — smooth animated pan
+    useEffect(() => {
+        if (!targetPan) return;
+        const container = panContainerRef.current;
+        if (!container) return;
+
+        const { x, y } = targetPan;
+
+        // Add transition for smooth pan
+        container.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        applyPanTransform(x, y);
+
+        // Commit to state and remove transition after animation completes
+        const timer = setTimeout(() => {
+            container.style.transition = '';
+            panRef.current = { x, y };
+            setPan({ x, y });
+        }, 420);
+
+        return () => clearTimeout(timer);
+    }, [targetPan, applyPanTransform]);
 
     // Handle drag and drop
     const handleDragOver = (e: React.DragEvent) => {
@@ -314,7 +342,11 @@ const Canvas = ({
                                 className={`h-full w-full flex flex-col select-none ${
                                     isDeleteMode
                                         ? 'delete-glow-border cursor-pointer'
-                                        : ''
+                                        : focusedSearchId === tile._id
+                                          ? 'drag-glow-border'
+                                          : searchMatchIds.has(tile._id)
+                                            ? 'search-glow-border'
+                                            : ''
                                 }`}
                                 onClick={() => {
                                     if (isDeleteMode) {

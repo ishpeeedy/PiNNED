@@ -111,6 +111,27 @@ html.dark {
     contain: layout style paint;
 }
 
+.search-glow-border {
+    animation: search-glow-pulse 1.5s ease-in-out infinite;
+    contain: layout style paint;
+}
+
+@keyframes search-glow-pulse {
+    0%,
+    100% {
+        box-shadow:
+            0 0 2px 2px #5294ff40,
+            0 0 6px 3px #5294ff20,
+            0 0 10px 5px #5294ff10;
+    }
+    50% {
+        box-shadow:
+            0 0 4px 4px #5294ff80,
+            0 0 12px 6px #5294ff50,
+            0 0 22px 10px #5294ff30;
+    }
+}
+
 .isometric-dots {
     background-color: var(--secondary-background);
     background-image: radial-gradient(

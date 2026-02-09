@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { boardAPI, tileAPI } from '@/services/api';
 import type { Board as BoardType, Tile } from '@/types';
@@ -16,6 +16,90 @@ const Board = () => {
     const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
     const [lastUsedColor, setLastUsedColor] = useState<string | null>(null);
     const [zoom, setZoom] = useState(1);
+
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchFocusIndex, setSearchFocusIndex] = useState(0);
+    const [targetPan, setTargetPan] = useState<{
+        x: number;
+        y: number;
+        version: number;
+    } | null>(null);
+    const panVersionRef = useRef(0);
+    const canvasContainerRef = useRef<HTMLDivElement>(null);
+
+    // Search: filter tiles by query across all text fields
+    const searchResults = useMemo(
+        () =>
+            searchQuery.trim().length >= 2
+                ? tiles.filter((tile) => {
+                      const q = searchQuery.toLowerCase();
+                      const d = tile.data || {};
+                      return [
+                          d.header,
+                          d.text,
+                          d.caption,
+                          d.linkUrl,
+                          d.linkTitle,
+                          d.linkDescription,
+                          d.author,
+                      ]
+                          .filter(Boolean)
+                          .some((field) => field!.toLowerCase().includes(q));
+                  })
+                : [],
+        [searchQuery, tiles]
+    );
+
+    const searchMatchIds = useMemo(
+        () => new Set(searchResults.map((t) => t._id)),
+        [searchResults]
+    );
+    const focusedSearchTile = searchResults[searchFocusIndex] ?? null;
+
+    const jumpToTile = useCallback(
+        (tile: Tile) => {
+            const container = canvasContainerRef.current;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const tileCenterX = (tile.position.x + tile.size.width / 2) * zoom;
+            const tileCenterY = (tile.position.y + tile.size.height / 2) * zoom;
+            panVersionRef.current += 1;
+            setTargetPan({
+                x: centerX - tileCenterX,
+                y: centerY - tileCenterY,
+                version: panVersionRef.current,
+            });
+            setSelectedTileId(tile._id);
+        },
+        [zoom]
+    );
+
+    const handleSearchChange = (query: string) => {
+        setSearchQuery(query);
+        setSearchFocusIndex(0);
+    };
+
+    // Jump to focused search result whenever it changes
+    useEffect(() => {
+        if (focusedSearchTile) {
+            jumpToTile(focusedSearchTile);
+        }
+    }, [focusedSearchTile, jumpToTile]);
+
+    const handleSearchNext = () => {
+        if (searchResults.length <= 1) return;
+        setSearchFocusIndex((prev) => (prev + 1) % searchResults.length);
+    };
+
+    const handleSearchPrev = () => {
+        if (searchResults.length <= 1) return;
+        setSearchFocusIndex(
+            (prev) => (prev - 1 + searchResults.length) % searchResults.length
+        );
+    };
 
     const handleZoomIn = () =>
         setZoom((z) => Math.min(2, parseFloat((z + 0.25).toFixed(2))));
@@ -383,17 +467,28 @@ const Board = () => {
                 onZoomOut={handleZoomOut}
                 onBringToFront={handleBringToFront}
                 onSendToBack={handleSendToBack}
+                searchQuery={searchQuery}
+                onSearchChange={handleSearchChange}
+                searchMatchCount={searchResults.length}
+                searchFocusIndex={searchFocusIndex}
+                onSearchNext={handleSearchNext}
+                onSearchPrev={handleSearchPrev}
             />
-            <Canvas
-                tiles={tiles}
-                onTileUpdate={handleTileUpdate}
-                isDeleteMode={isDeleteMode}
-                onDeleteTile={handleDeleteTile}
-                onCreateTileFromDrop={handleCreateTileFromDrop}
-                onTileClick={handleTileClick}
-                zoom={zoom}
-                background={board?.settings?.background}
-            />
+            <div ref={canvasContainerRef} className="flex-1 flex flex-col">
+                <Canvas
+                    tiles={tiles}
+                    onTileUpdate={handleTileUpdate}
+                    isDeleteMode={isDeleteMode}
+                    onDeleteTile={handleDeleteTile}
+                    onCreateTileFromDrop={handleCreateTileFromDrop}
+                    onTileClick={handleTileClick}
+                    zoom={zoom}
+                    background={board?.settings?.background}
+                    searchMatchIds={searchMatchIds}
+                    focusedSearchId={focusedSearchTile?._id ?? null}
+                    targetPan={targetPan}
+                />
+            </div>
         </div>
     );
 };

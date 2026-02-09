@@ -1,5 +1,75 @@
 export const changelogData = [
     {
+        version: '2.1',
+        date: 'Feb 09, 2026',
+        changes: [
+            'Added live text search in the toolbar — search across all tile content (text, headers, captions, link titles, descriptions) within the open board',
+            'Matching tiles highlight with a pulsing blue glow; the focused match gets a bright solid glow',
+            'Canvas smoothly pans to center the focused match on search',
+            'Navigate between multiple matches with the arrow buttons or Enter key',
+            'Match counter shows current position (e.g. 2 / 5)',
+            'Clear search with the X button or Escape key',
+        ],
+    },
+    {
+        version: '2.0',
+        date: 'Feb 07, 2026',
+        changes: [
+            'Fixed orphaned images — Cloudinary assets are now deleted when an image tile is removed',
+            'Cloudinary public ID is now stored on the tile so cleanup is always possible',
+            'Removed GSAP from manual chunk splitting — bundled into main JS for instant home page load',
+            'Fixed flash of unstyled content (FOUC) — dark mode class now applied synchronously before the page paints',
+            'Removed stale console logs across Board, Toolbar, and ImageTile components',
+        ],
+    },
+    {
+        version: '1.9',
+        date: 'Feb 06, 2026',
+        changes: [
+            'Fixed GSAP ScrollSmoother cleanup on the home page — no lingering scroll listeners after navigation',
+            'Replaced anchor tags with React Router Link in Navbar and Footer for proper client-side navigation',
+        ],
+    },
+    {
+        version: '1.8',
+        date: 'Feb 05, 2026',
+        changes: [
+            'Added optimistic auth to the Navbar — login state resolves instantly without waiting for the API',
+            'Optimised bundle chunking — React and Matter.js are now in separate vendor chunks for faster repeat loads',
+            'Fixed loader flash on the home page by co-bundling GSAP with home page chunks',
+            'Moved hero landing image to Cloudinary with lazy loading on all homepage carousel images',
+            'Added decorative pinwheel component to the login, register, and changelog pages',
+        ],
+    },
+    {
+        version: '1.7',
+        date: 'Feb 04, 2026',
+        changes: [
+            'Added 404 Not Found page with a Matter.js physics simulation',
+            'Added login and register links to the navbar dropdown when signed out',
+            'Fixed navbar logo — routes to the dashboard when logged in, home page when logged out',
+            'Added back-to-top button on the changelog page',
+            'Fixed search bar border visibility in dark mode on the dashboard page',
+            'Fixed footer overlapping content on the dashboard page',
+            'Fixed text color on the delete board confirmation modal',
+        ],
+    },
+    {
+        version: '1.6',
+        date: 'Feb 02, 2026',
+        changes: [
+            'Fixed page failing to load on initial deployment to Render',
+        ],
+    },
+    {
+        version: '1.5',
+        date: 'Feb 01, 2026',
+        changes: [
+            'Added Bring to Front and Send to Back buttons to the toolbar',
+            'Selected tile is now automatically brought to the front of the stack',
+        ],
+    },
+    {
         version: '1.3',
         date: 'Jan 31, 2026',
         changes: [

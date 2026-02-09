@@ -10,6 +10,9 @@ import {
     Trash2,
     ArrowUpToLine,
     ArrowDownToLine,
+    ChevronLeft,
+    ChevronRight,
+    X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +34,12 @@ interface ToolbarProps {
     onZoomOut?: () => void;
     onBringToFront?: () => void;
     onSendToBack?: () => void;
+    searchQuery?: string;
+    onSearchChange?: (query: string) => void;
+    searchMatchCount?: number;
+    searchFocusIndex?: number;
+    onSearchNext?: () => void;
+    onSearchPrev?: () => void;
 }
 
 const Toolbar = ({
@@ -48,6 +57,12 @@ const Toolbar = ({
     onZoomOut,
     onBringToFront,
     onSendToBack,
+    searchQuery = '',
+    onSearchChange,
+    searchMatchCount = 0,
+    searchFocusIndex = 0,
+    onSearchNext,
+    onSearchPrev,
 }: ToolbarProps) => {
     const handleCreateTile = (type: 'text' | 'image' | 'link') => {
         if (isDeleteMode) {
@@ -155,14 +170,66 @@ const Toolbar = ({
 
             {/* Center: Search */}
             <div className="flex-1 flex justify-center">
-                <div className="relative max-w-md w-full">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-foreground/60" />
-                    <Input
-                        type="text"
-                        placeholder="Search tiles..."
-                        className="pl-10 text-black"
-                        onFocus={() => toast.info('Search (coming soon)')}
-                    />
+                <div className="relative max-w-md w-full flex items-center gap-1">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-foreground/60" />
+                        <Input
+                            type="text"
+                            placeholder="Search tiles..."
+                            className="pl-10 pr-8 text-black dark:text-white"
+                            value={searchQuery}
+                            onChange={(e) => onSearchChange?.(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    if (e.shiftKey) {
+                                        onSearchPrev?.();
+                                    } else {
+                                        onSearchNext?.();
+                                    }
+                                }
+                                if (e.key === 'Escape') {
+                                    onSearchChange?.('');
+                                }
+                            }}
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => onSearchChange?.('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground/80"
+                                title="Clear search"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                    {searchQuery && (
+                        <div className="flex items-center gap-1">
+                            <span className="text-sm text-foreground/60 whitespace-nowrap min-w-[4rem] text-center">
+                                {searchMatchCount > 0
+                                    ? `${searchFocusIndex + 1} / ${searchMatchCount}`
+                                    : 'No results'}
+                            </span>
+                            <Button
+                                onClick={onSearchPrev}
+                                disabled={searchMatchCount <= 1}
+                                variant="neutral"
+                                className="h-8 w-8 p-0"
+                                title="Previous match"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                onClick={onSearchNext}
+                                disabled={searchMatchCount <= 1}
+                                variant="neutral"
+                                className="h-8 w-8 p-0"
+                                title="Next match"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
 
