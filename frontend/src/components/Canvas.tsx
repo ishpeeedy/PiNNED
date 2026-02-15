@@ -20,6 +20,8 @@ interface CanvasProps {
     searchMatchIds?: Set<string>;
     focusedSearchId?: string | null;
     targetPan?: { x: number; y: number; version: number } | null;
+    semanticRankMap?: Map<string, number>;
+    semanticScoreMap?: Map<string, number>;
 }
 
 const Canvas = ({
@@ -34,6 +36,8 @@ const Canvas = ({
     searchMatchIds = new Set<string>(),
     focusedSearchId = null,
     targetPan = null,
+    semanticRankMap = new Map<string, number>(),
+    semanticScoreMap = new Map<string, number>(),
 }: CanvasProps) => {
     const canvasRef = useRef<HTMLDivElement>(null);
     const panContainerRef = useRef<HTMLDivElement>(null);
@@ -157,7 +161,8 @@ const Canvas = ({
         const { x, y } = targetPan;
 
         // Add transition for smooth pan
-        container.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        container.style.transition =
+            'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
         applyPanTransform(x, y);
 
         // Commit to state and remove transition after animation completes
@@ -339,14 +344,24 @@ const Canvas = ({
                         >
                             <div
                                 data-tile-id={tile._id}
-                                className={`h-full w-full flex flex-col select-none ${
+                                className={`relative h-full w-full flex flex-col select-none ${
                                     isDeleteMode
                                         ? 'delete-glow-border cursor-pointer'
                                         : focusedSearchId === tile._id
                                           ? 'drag-glow-border'
-                                          : searchMatchIds.has(tile._id)
-                                            ? 'search-glow-border'
-                                            : ''
+                                          : (() => {
+                                                const score =
+                                                    semanticScoreMap.get(
+                                                        tile._id
+                                                    );
+                                                if (score === undefined)
+                                                    return '';
+                                                if (score >= 0.85)
+                                                    return 'search-glow-border-high';
+                                                if (score >= 0.78)
+                                                    return 'search-glow-border-mid';
+                                                return 'search-glow-border-low';
+                                            })()
                                 }`}
                                 onClick={() => {
                                     if (isDeleteMode) {
@@ -358,7 +373,13 @@ const Canvas = ({
                                 }}
                             >
                                 {/* Drag handle bar */}
-                                <div className="tile-drag-handle bg-black/5 h-[40px] flex items-center justify-center flex-shrink-0 cursor-default hover:cursor-grab active:cursor-grabbing transition-colors hover:bg-black/8"></div>
+                                <div className="tile-drag-handle bg-black/5 h-[40px] flex items-center justify-center flex-shrink-0 cursor-default hover:cursor-grab active:cursor-grabbing transition-colors hover:bg-black/8">
+                                    {semanticRankMap.has(tile._id) && (
+                                        <span className="absolute top-2 right-2 z-10 text-xs font-bold leading-none px-2 py-1 rounded-full bg-[#5294ff] text-white pointer-events-none shadow-md">
+                                            #{semanticRankMap.get(tile._id)}
+                                        </span>
+                                    )}
+                                </div>
                                 {/* Tile content */}
                                 <div className="flex-1 overflow-hidden select-text">
                                     {tile.type === 'text' && (

@@ -111,24 +111,68 @@ html.dark {
     contain: layout style paint;
 }
 
-.search-glow-border {
-    animation: search-glow-pulse 1.5s ease-in-out infinite;
+.search-glow-border-low {
+    animation: search-glow-pulse-low 1.5s ease-in-out infinite;
     contain: layout style paint;
 }
 
-@keyframes search-glow-pulse {
+@keyframes search-glow-pulse-low {
     0%,
     100% {
         box-shadow:
-            0 0 2px 2px #5294ff40,
-            0 0 6px 3px #5294ff20,
-            0 0 10px 5px #5294ff10;
+            0 0 2px 2px #5294ff30,
+            0 0 6px 3px #5294ff15,
+            0 0 12px 6px #5294ff08;
     }
     50% {
         box-shadow:
-            0 0 4px 4px #5294ff80,
-            0 0 12px 6px #5294ff50,
-            0 0 22px 10px #5294ff30;
+            0 0 3px 3px #5294ff60,
+            0 0 10px 5px #5294ff30,
+            0 0 18px 8px #5294ff18;
+    }
+}
+
+.search-glow-border-mid {
+    animation: search-glow-pulse-mid 1.5s ease-in-out infinite;
+    contain: layout style paint;
+}
+
+@keyframes search-glow-pulse-mid {
+    0%,
+    100% {
+        box-shadow:
+            0 0 3px 3px #5294ff60,
+            0 0 10px 5px #5294ff35,
+            0 0 20px 10px #5294ff20;
+    }
+    50% {
+        box-shadow:
+            0 0 5px 5px #5294ffaa,
+            0 0 16px 8px #5294ff60,
+            0 0 30px 14px #5294ff35;
+    }
+}
+
+.search-glow-border-high {
+    animation: search-glow-pulse-high 1.2s ease-in-out infinite;
+    contain: layout style paint;
+}
+
+@keyframes search-glow-pulse-high {
+    0%,
+    100% {
+        box-shadow:
+            0 0 4px 4px #5294ffcc,
+            0 0 14px 7px #5294ff80,
+            0 0 28px 14px #5294ff50,
+            0 0 40px 20px #5294ff25;
+    }
+    50% {
+        box-shadow:
+            0 0 6px 6px #5294ff,
+            0 0 20px 10px #5294ffaa,
+            0 0 38px 18px #5294ff70,
+            0 0 55px 25px #5294ff40;
     }
 }
 

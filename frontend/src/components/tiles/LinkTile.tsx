@@ -177,10 +177,12 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                             </div>
                         )}
                         {linkTitle && (
-                            <h3 className="text-lg font-bold text-black">{linkTitle}</h3>
+                            <h3 className="text-lg font-bold text-black">
+                                {linkTitle}
+                            </h3>
                         )}
                         {(author || publishDate) && (
-                            <p className="text-xs text-foreground/60">
+                            <p className="text-xs text-black">
                                 {author && <span>by {author}</span>}
                                 {author && publishDate && <span> • </span>}
                                 {publishDate && (

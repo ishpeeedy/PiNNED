@@ -1,5 +1,6 @@
 import { getEmbedding } from '../config/gemini.ts';
 import type { ITile } from '../models/tile.ts';
+import Tile from '../models/tile.ts';
 
 const TEXT_FIELDS = [
     'header',
@@ -23,8 +24,7 @@ export async function generateAndSaveEmbedding(tile: ITile): Promise<void> {
         const text = buildTileText(tile);
         if (!text) return;
         const embedding = await getEmbedding(text);
-        tile.embedding = embedding;
-        await tile.save();
+        await Tile.findByIdAndUpdate(tile._id, { $set: { embedding } });
     } catch (err) {
         console.error('Embedding generation failed:', err);
     }

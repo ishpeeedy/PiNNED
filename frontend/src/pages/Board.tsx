@@ -21,7 +21,12 @@ const Board = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchFocusIndex, setSearchFocusIndex] = useState(0);
     const [isSemanticSearching, setIsSemanticSearching] = useState(false);
-    const [semanticResultIds, setSemanticResultIds] = useState<string[] | null>(null);
+    const [semanticResultIds, setSemanticResultIds] = useState<string[] | null>(
+        null
+    );
+    const [semanticScores, setSemanticScores] = useState<Map<string, number>>(
+        new Map()
+    );
     const [targetPan, setTargetPan] = useState<{
         x: number;
         y: number;
@@ -31,38 +36,46 @@ const Board = () => {
     const canvasContainerRef = useRef<HTMLDivElement>(null);
 
     // Search: filter tiles by query across all text fields
-    const searchResults = useMemo(
-        () => {
-            if (semanticResultIds) {
-                return semanticResultIds
-                    .map((sid) => tiles.find((t) => t._id === sid))
-                    .filter(Boolean) as Tile[];
-            }
-            return searchQuery.trim().length >= 2
-                ? tiles.filter((tile) => {
-                      const q = searchQuery.toLowerCase();
-                      const d = tile.data || {};
-                      return [
-                          d.header,
-                          d.text,
-                          d.caption,
-                          d.linkUrl,
-                          d.linkTitle,
-                          d.linkDescription,
-                          d.author,
-                      ]
-                          .filter(Boolean)
-                          .some((field) => field!.toLowerCase().includes(q));
-                  })
-                : [];
-        },
-        [searchQuery, tiles, semanticResultIds]
-    );
+    const searchResults = useMemo(() => {
+        if (semanticResultIds) {
+            return semanticResultIds
+                .map((sid) => tiles.find((t) => t._id === sid))
+                .filter(Boolean) as Tile[];
+        }
+        return searchQuery.trim().length >= 2
+            ? tiles.filter((tile) => {
+                  const q = searchQuery.toLowerCase();
+                  const d = tile.data || {};
+                  return [
+                      d.header,
+                      d.text,
+                      d.caption,
+                      d.linkUrl,
+                      d.linkTitle,
+                      d.linkDescription,
+                      d.author,
+                  ]
+                      .filter(Boolean)
+                      .some((field) => field!.toLowerCase().includes(q));
+              })
+            : [];
+    }, [searchQuery, tiles, semanticResultIds]);
 
     const searchMatchIds = useMemo(
         () => new Set(searchResults.map((t) => t._id)),
         [searchResults]
     );
+    const semanticRankMap = useMemo(
+        () =>
+            semanticResultIds
+                ? new Map(semanticResultIds.map((id, i) => [id, i + 1]))
+                : new Map<string, number>(),
+        [semanticResultIds]
+    );
+    const semanticScoreMap = useMemo(() => {
+        if (!semanticResultIds) return new Map<string, number>();
+        return semanticScores;
+    }, [semanticResultIds, semanticScores]);
     const focusedSearchTile = searchResults[searchFocusIndex] ?? null;
 
     const jumpToTile = useCallback(
@@ -89,6 +102,7 @@ const Board = () => {
         setSearchQuery(query);
         setSearchFocusIndex(0);
         setSemanticResultIds(null);
+        setSemanticScores(new Map());
     };
 
     // Jump to focused search result whenever it changes
@@ -115,10 +129,20 @@ const Board = () => {
         setIsSemanticSearching(true);
         try {
             const data = await tileAPI.semanticSearch(id, searchQuery);
-            setSemanticResultIds(data.results.map((r) => r._id));
+            const ids = data.results.map((r) => r._id);
+            const scores = new Map(data.results.map((r) => [r._id, r.score]));
+            setSemanticResultIds(ids);
+            setSemanticScores(scores);
             setSearchFocusIndex(0);
-        } catch {
-            toast.error('Semantic search failed');
+            if (ids.length === 0) {
+                toast.info('No semantically similar tiles found');
+            }
+        } catch (err: unknown) {
+            console.error('Semantic search error:', err);
+            const msg =
+                (err as { response?: { data?: { message?: string } } })
+                    ?.response?.data?.message ?? 'Semantic search failed';
+            toast.error(msg);
             setSemanticResultIds(null);
         } finally {
             setIsSemanticSearching(false);
@@ -513,6 +537,8 @@ const Board = () => {
                     searchMatchIds={searchMatchIds}
                     focusedSearchId={focusedSearchTile?._id ?? null}
                     targetPan={targetPan}
+                    semanticRankMap={semanticRankMap}
+                    semanticScoreMap={semanticScoreMap}
                 />
             </div>
         </div>

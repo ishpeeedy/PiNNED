@@ -9,5 +9,5 @@ export function initializeGemini() {
 export async function getEmbedding(text: string): Promise<number[]> {
     const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
     const result = await model.embedContent(text);
-    return result.embedding.values;
+    return result.embedding.values; // 3072 dimensions
 }
