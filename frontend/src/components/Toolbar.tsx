@@ -13,6 +13,8 @@ import {
     ChevronLeft,
     ChevronRight,
     X,
+    Sparkles,
+    Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +42,8 @@ interface ToolbarProps {
     searchFocusIndex?: number;
     onSearchNext?: () => void;
     onSearchPrev?: () => void;
+    onSemanticSearch?: () => void;
+    isSemanticSearching?: boolean;
 }
 
 const Toolbar = ({
@@ -63,6 +67,8 @@ const Toolbar = ({
     searchFocusIndex = 0,
     onSearchNext,
     onSearchPrev,
+    onSemanticSearch,
+    isSemanticSearching = false,
 }: ToolbarProps) => {
     const handleCreateTile = (type: 'text' | 'image' | 'link') => {
         if (isDeleteMode) {
@@ -203,6 +209,19 @@ const Toolbar = ({
                             </button>
                         )}
                     </div>
+                    <Button
+                        onClick={onSemanticSearch}
+                        disabled={!searchQuery || searchQuery.trim().length < 2 || isSemanticSearching}
+                        variant="neutral"
+                        className="h-9 w-9 p-0 shrink-0"
+                        title="AI semantic search"
+                    >
+                        {isSemanticSearching ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <Sparkles className="w-4 h-4" />
+                        )}
+                    </Button>
                     {searchQuery && (
                         <div className="flex items-center gap-1">
                             <span className="text-sm text-foreground/60 whitespace-nowrap min-w-[4rem] text-center">

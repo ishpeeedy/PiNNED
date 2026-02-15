@@ -20,6 +20,8 @@ const Board = () => {
     // Search state
     const [searchQuery, setSearchQuery] = useState('');
     const [searchFocusIndex, setSearchFocusIndex] = useState(0);
+    const [isSemanticSearching, setIsSemanticSearching] = useState(false);
+    const [semanticResultIds, setSemanticResultIds] = useState<string[] | null>(null);
     const [targetPan, setTargetPan] = useState<{
         x: number;
         y: number;
@@ -30,8 +32,13 @@ const Board = () => {
 
     // Search: filter tiles by query across all text fields
     const searchResults = useMemo(
-        () =>
-            searchQuery.trim().length >= 2
+        () => {
+            if (semanticResultIds) {
+                return semanticResultIds
+                    .map((sid) => tiles.find((t) => t._id === sid))
+                    .filter(Boolean) as Tile[];
+            }
+            return searchQuery.trim().length >= 2
                 ? tiles.filter((tile) => {
                       const q = searchQuery.toLowerCase();
                       const d = tile.data || {};
@@ -47,8 +54,9 @@ const Board = () => {
                           .filter(Boolean)
                           .some((field) => field!.toLowerCase().includes(q));
                   })
-                : [],
-        [searchQuery, tiles]
+                : [];
+        },
+        [searchQuery, tiles, semanticResultIds]
     );
 
     const searchMatchIds = useMemo(
@@ -80,6 +88,7 @@ const Board = () => {
     const handleSearchChange = (query: string) => {
         setSearchQuery(query);
         setSearchFocusIndex(0);
+        setSemanticResultIds(null);
     };
 
     // Jump to focused search result whenever it changes
@@ -99,6 +108,21 @@ const Board = () => {
         setSearchFocusIndex(
             (prev) => (prev - 1 + searchResults.length) % searchResults.length
         );
+    };
+
+    const handleSemanticSearch = async () => {
+        if (!id || searchQuery.trim().length < 2) return;
+        setIsSemanticSearching(true);
+        try {
+            const data = await tileAPI.semanticSearch(id, searchQuery);
+            setSemanticResultIds(data.results.map((r) => r._id));
+            setSearchFocusIndex(0);
+        } catch {
+            toast.error('Semantic search failed');
+            setSemanticResultIds(null);
+        } finally {
+            setIsSemanticSearching(false);
+        }
     };
 
     const handleZoomIn = () =>
@@ -473,6 +497,8 @@ const Board = () => {
                 searchFocusIndex={searchFocusIndex}
                 onSearchNext={handleSearchNext}
                 onSearchPrev={handleSearchPrev}
+                onSemanticSearch={handleSemanticSearch}
+                isSemanticSearching={isSemanticSearching}
             />
             <div ref={canvasContainerRef} className="flex-1 flex flex-col">
                 <Canvas

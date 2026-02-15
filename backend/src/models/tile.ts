@@ -30,6 +30,7 @@ export interface ITile extends Document {
         publishDate?: string;
     };
     zIndex: number;
+    embedding?: number[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -61,6 +62,7 @@ const TileSchema = new Schema(
             default: {},
         },
         zIndex: { type: Number, default: 1 },
+        embedding: { type: [Number], default: undefined, select: false },
     },
     {
         timestamps: true,

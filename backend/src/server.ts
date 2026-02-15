@@ -17,9 +17,11 @@ import tileRoutes from './routes/tile.ts';
 import uploadRoutes from './routes/upload.ts';
 import metadataRoutes from './routes/metadata.ts';
 import { initializeCloudinary } from './config/cloudinary.ts';
+import { initializeGemini } from './config/gemini.ts';
 
-// Initialize Cloudinary AFTER env is loaded
+// Initialize Cloudinary and Gemini AFTER env is loaded
 initializeCloudinary();
+initializeGemini();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

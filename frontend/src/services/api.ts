@@ -117,6 +117,16 @@ export const tileAPI = {
         );
         return response.data;
     },
+
+    // Semantic search tiles
+    semanticSearch: async (boardId: string, query: string) => {
+        const response = await api.get<{
+            results: Array<{ _id: string; score: number }>;
+        }>(`/api/boards/${boardId}/tiles/search`, {
+            params: { q: query },
+        });
+        return response.data;
+    },
 };
 
 export const metadataAPI = {
