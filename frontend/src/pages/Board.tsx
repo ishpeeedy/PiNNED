@@ -159,6 +159,7 @@ const Board = () => {
     const [historyIndex, setHistoryIndex] = useState(-1);
     const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [undoRedoKey, setUndoRedoKey] = useState(0);
 
     const handleToggleDelete = () => {
         const newDeleteMode = !isDeleteMode;
@@ -229,12 +230,13 @@ const Board = () => {
         }
     };
 
-    const handleUndo = () => {
+    const handleUndo = useCallback(() => {
         if (historyIndex > 0 && !isSyncing) {
             const newIndex = historyIndex - 1;
             setHistoryIndex(newIndex);
             const restoredTiles = JSON.parse(JSON.stringify(history[newIndex]));
             setTiles(restoredTiles);
+            setUndoRedoKey((k) => k + 1);
 
             // Debounced sync to backend
             if (syncTimeoutRef.current) {
@@ -246,14 +248,15 @@ const Board = () => {
 
             toast.success('Undo');
         }
-    };
+    }, [historyIndex, isSyncing, history, syncTilesToBackend]);
 
-    const handleRedo = () => {
+    const handleRedo = useCallback(() => {
         if (historyIndex < history.length - 1 && !isSyncing) {
             const newIndex = historyIndex + 1;
             setHistoryIndex(newIndex);
             const restoredTiles = JSON.parse(JSON.stringify(history[newIndex]));
             setTiles(restoredTiles);
+            setUndoRedoKey((k) => k + 1);
 
             // Debounced sync to backend
             if (syncTimeoutRef.current) {
@@ -265,7 +268,35 @@ const Board = () => {
 
             toast.success('Redo');
         }
-    };
+    }, [historyIndex, history, isSyncing, syncTilesToBackend]);
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const ctrl = e.ctrlKey || e.metaKey;
+            // Skip when typing in an input, textarea, or contentEditable
+            const tag = (document.activeElement as HTMLElement)?.tagName;
+            const isEditing =
+                tag === 'INPUT' ||
+                tag === 'TEXTAREA' ||
+                (document.activeElement as HTMLElement)?.isContentEditable;
+            if (isEditing) return;
+
+            if (ctrl && e.key === 'z') {
+                e.preventDefault();
+                handleUndo();
+            } else if (
+                ctrl &&
+                (e.key === 'y' || (e.shiftKey && e.key === 'Z'))
+            ) {
+                e.preventDefault();
+                handleRedo();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleUndo, handleRedo]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -539,6 +570,7 @@ const Board = () => {
                     targetPan={targetPan}
                     semanticRankMap={semanticRankMap}
                     semanticScoreMap={semanticScoreMap}
+                    undoRedoKey={undoRedoKey}
                 />
             </div>
         </div>

@@ -22,6 +22,7 @@ interface CanvasProps {
     targetPan?: { x: number; y: number; version: number } | null;
     semanticRankMap?: Map<string, number>;
     semanticScoreMap?: Map<string, number>;
+    undoRedoKey?: number;
 }
 
 const Canvas = ({
@@ -38,6 +39,7 @@ const Canvas = ({
     targetPan = null,
     semanticRankMap = new Map<string, number>(),
     semanticScoreMap = new Map<string, number>(),
+    undoRedoKey = 0,
 }: CanvasProps) => {
     const canvasRef = useRef<HTMLDivElement>(null);
     const panContainerRef = useRef<HTMLDivElement>(null);
@@ -395,7 +397,7 @@ const Canvas = ({
                 >
                     {tiles.map((tile) => (
                         <Rnd
-                            key={tile._id}
+                            key={`${tile._id}-${undoRedoKey}`}
                             position={{
                                 x: tile.position.x,
                                 y: tile.position.y,

@@ -173,8 +173,12 @@ router.patch(
                 return res.status(403).json({ message: 'Access denied' });
             }
             delete updates.boardId;
-            Object.assign(tile, updates);
-            await tile.save();
+
+            const updatedTile = await Tile.findByIdAndUpdate(
+                id,
+                { $set: updates },
+                { new: true, runValidators: false }
+            );
 
             // Re-embed if any text field changed (debounced — waits 5s of
             // inactivity so rapid edits don't burn the daily quota)
@@ -187,15 +191,16 @@ router.patch(
                 'author',
             ];
             if (updates.data && textFields.some((f) => f in updates.data)) {
-                debouncedGenerateAndSaveEmbedding(tile);
+                debouncedGenerateAndSaveEmbedding(updatedTile!);
             }
 
             // Update board's updatedAt timestamp
             board.updatedAt = new Date();
             await board.save();
 
-            return res.json(tile);
+            return res.json(updatedTile);
         } catch (error) {
+            console.error('Failed to update tile:', error);
             return res.status(500).json({ message: 'internal server error' });
         }
     }
