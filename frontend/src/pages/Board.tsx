@@ -14,6 +14,9 @@ const Board = () => {
     const [loading, setLoading] = useState(true);
     const [isDeleteMode, setIsDeleteMode] = useState(false);
     const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
+    const [selectedTileIds, setSelectedTileIds] = useState<Set<string>>(
+        new Set()
+    );
     const [lastUsedColor, setLastUsedColor] = useState<string | null>(null);
     const [zoom, setZoom] = useState(1);
 
@@ -420,15 +423,37 @@ const Board = () => {
             if (selectedTileId === tileId) {
                 setSelectedTileId(null);
             }
+            setSelectedTileIds((prev) => {
+                const next = new Set(prev);
+                next.delete(tileId);
+                return next;
+            });
         } catch (error) {
             console.error('Failed to delete tile:', error);
             toast.error('Failed to delete tile');
         }
     };
 
-    const handleTileClick = (tileId: string) => {
-        // Set the clicked tile as selected
+    const handleTileClick = (tileId: string, ctrlKey: boolean) => {
+        if (ctrlKey) {
+            setSelectedTileIds((prev) => {
+                const next = new Set(prev);
+                if (next.has(tileId)) {
+                    next.delete(tileId);
+                } else {
+                    next.add(tileId);
+                }
+                return next;
+            });
+        } else {
+            setSelectedTileIds(new Set([tileId]));
+        }
         setSelectedTileId(tileId);
+    };
+
+    const handleCanvasClick = () => {
+        setSelectedTileIds(new Set());
+        setSelectedTileId(null);
     };
 
     const handleBringToFront = () => {
@@ -563,6 +588,8 @@ const Board = () => {
                     onDeleteTile={handleDeleteTile}
                     onCreateTileFromDrop={handleCreateTileFromDrop}
                     onTileClick={handleTileClick}
+                    onCanvasClick={handleCanvasClick}
+                    selectedTileIds={selectedTileIds}
                     zoom={zoom}
                     background={board?.settings?.background}
                     searchMatchIds={searchMatchIds}

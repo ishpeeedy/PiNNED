@@ -16,7 +16,9 @@ interface CanvasProps {
     ) => void;
     zoom?: number;
     background?: BoardBackground;
-    onTileClick?: (tileId: string) => void;
+    onTileClick?: (tileId: string, ctrlKey: boolean) => void;
+    onCanvasClick?: () => void;
+    selectedTileIds?: Set<string>;
     searchMatchIds?: Set<string>;
     focusedSearchId?: string | null;
     targetPan?: { x: number; y: number; version: number } | null;
@@ -34,6 +36,8 @@ const Canvas = ({
     zoom = 1,
     background,
     onTileClick,
+    onCanvasClick,
+    selectedTileIds = new Set<string>(),
     searchMatchIds = new Set<string>(),
     focusedSearchId = null,
     targetPan = null,
@@ -49,15 +53,24 @@ const Canvas = ({
     const dragStartRef = useRef({ x: 0, y: 0 });
     const [isDragOver, setIsDragOver] = useState(false);
     const draggingTileRef = useRef<string | null>(null);
+
+    // Track selectedTileIds in a ref so drag handlers always read the latest value
+    const selectedTileIdsRef = useRef(selectedTileIds);
+    useEffect(() => {
+        selectedTileIdsRef.current = selectedTileIds;
+    }, [selectedTileIds]);
+
     const tileDragRef = useRef<{
-        tileId: string;
         startMouseX: number;
         startMouseY: number;
-        startTileX: number;
-        startTileY: number;
-        currentX: number;
-        currentY: number;
-        rndEl: HTMLElement;
+        tiles: {
+            tileId: string;
+            rndEl: HTMLElement;
+            startX: number;
+            startY: number;
+            currentX: number;
+            currentY: number;
+        }[];
     } | null>(null);
 
     // Bring a tile to the front by giving it the highest zIndex
@@ -78,54 +91,67 @@ const Canvas = ({
         zoomRef.current = zoom;
     }, [zoom]);
 
-    // Custom tile drag — bypasses react-rnd drag entirely
+    // Custom tile drag — bypasses react-rnd drag entirely, supports group drag
     useEffect(() => {
         const onMouseDown = (e: MouseEvent) => {
-            // Only handle left-click on drag handles
             if (e.button !== 0) return;
             const handle = (e.target as HTMLElement).closest(
                 '.tile-drag-handle'
             );
             if (!handle) return;
 
-            // Find the tile data-id from the inner content div
             const tileDiv = handle.closest(
                 '[data-tile-id]'
             ) as HTMLElement | null;
             if (!tileDiv) return;
-            const tileId = tileDiv.getAttribute('data-tile-id');
-            if (!tileId) return;
+            const draggedId = tileDiv.getAttribute('data-tile-id');
+            if (!draggedId) return;
 
-            // Find the Rnd wrapper — the outer position:absolute div managed by react-rnd
-            // It's the parent of the data-tile-id div
-            const rndEl = tileDiv.parentElement as HTMLElement | null;
-            if (!rndEl) return;
+            // If the dragged tile is part of the selection, move all selected tiles.
+            // Otherwise just move the dragged tile alone.
+            const selection = selectedTileIdsRef.current;
+            const tileIds = selection.has(draggedId)
+                ? Array.from(selection)
+                : [draggedId];
 
-            // Read current tile position from the Rnd element's inline transform
-            // react-rnd uses transform: translate(Xpx, Ypx) for positioning
-            const match = rndEl.style.transform.match(
-                /translate\(([^,]+),\s*([^)]+)\)/
-            );
-            const curX = match ? parseFloat(match[1]) : 0;
-            const curY = match ? parseFloat(match[2]) : 0;
+            // Gather DOM info for each tile in the group
+            const tileEntries: typeof tileDragRef.current.tiles = [];
+            for (const tileId of tileIds) {
+                const el = document.querySelector(
+                    `[data-tile-id="${tileId}"]`
+                ) as HTMLElement | null;
+                if (!el) continue;
+                const rndEl = el.parentElement as HTMLElement;
+                if (!rndEl) continue;
+                const match = rndEl.style.transform.match(
+                    /translate\(([^,]+),\s*([^)]+)\)/
+                );
+                const curX = match ? parseFloat(match[1]) : 0;
+                const curY = match ? parseFloat(match[2]) : 0;
+                el.classList.add('drag-glow-border');
+                rndEl.style.zIndex = '9999';
+                tileEntries.push({
+                    tileId,
+                    rndEl,
+                    startX: curX,
+                    startY: curY,
+                    currentX: curX,
+                    currentY: curY,
+                });
+            }
+
+            if (tileEntries.length === 0) return;
 
             e.preventDefault();
             e.stopPropagation();
 
             tileDragRef.current = {
-                tileId,
                 startMouseX: e.clientX,
                 startMouseY: e.clientY,
-                startTileX: curX,
-                startTileY: curY,
-                currentX: curX,
-                currentY: curY,
-                rndEl,
+                tiles: tileEntries,
             };
 
-            draggingTileRef.current = tileId;
-            tileDiv.classList.add('drag-glow-border');
-            rndEl.style.zIndex = '9999';
+            draggingTileRef.current = draggedId;
         };
 
         const onMouseMove = (e: MouseEvent) => {
@@ -135,39 +161,36 @@ const Canvas = ({
             const z = zoomRef.current;
             const dx = (e.clientX - drag.startMouseX) / z;
             const dy = (e.clientY - drag.startMouseY) / z;
-            const newX = drag.startTileX + dx;
-            const newY = drag.startTileY + dy;
 
-            // Move the Rnd wrapper directly via inline transform — no React re-render
-            drag.rndEl.style.transform = `translate(${newX}px, ${newY}px)`;
-            drag.currentX = newX;
-            drag.currentY = newY;
+            for (const t of drag.tiles) {
+                const newX = t.startX + dx;
+                const newY = t.startY + dy;
+                t.rndEl.style.transform = `translate(${newX}px, ${newY}px)`;
+                t.currentX = newX;
+                t.currentY = newY;
+            }
         };
 
         const onMouseUp = () => {
             const drag = tileDragRef.current;
             if (!drag) return;
 
-            // Read final position from our tracked values
-            const finalX = drag.currentX;
-            const finalY = drag.currentY;
+            for (const t of drag.tiles) {
+                const tileEl = t.rndEl.querySelector(
+                    '[data-tile-id]'
+                ) as HTMLElement | null;
+                if (tileEl) tileEl.classList.remove('drag-glow-border');
 
-            // Remove glow
-            const tileDiv = drag.rndEl.querySelector(
-                '[data-tile-id]'
-            ) as HTMLElement | null;
-            if (tileDiv) {
-                tileDiv.classList.remove('drag-glow-border');
+                onTileUpdate?.(t.tileId, {
+                    position: {
+                        x: Math.round(t.currentX),
+                        y: Math.round(t.currentY),
+                    },
+                });
             }
 
-            const tileId = drag.tileId;
             tileDragRef.current = null;
             draggingTileRef.current = null;
-
-            // Commit final position to React state
-            onTileUpdate?.(tileId, {
-                position: { x: Math.round(finalX), y: Math.round(finalY) },
-            });
         };
 
         window.addEventListener('mousedown', onMouseDown, true);
@@ -364,6 +387,7 @@ const Canvas = ({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            onClick={() => onCanvasClick?.()}
             style={{
                 backgroundColor: 'var(--secondary-background)',
             }}
@@ -443,26 +467,32 @@ const Canvas = ({
                                         ? 'delete-glow-border cursor-pointer'
                                         : focusedSearchId === tile._id
                                           ? 'drag-glow-border'
-                                          : (() => {
-                                                const score =
-                                                    semanticScoreMap.get(
-                                                        tile._id
-                                                    );
-                                                if (score === undefined)
-                                                    return '';
-                                                if (score >= 0.85)
-                                                    return 'search-glow-border-high';
-                                                if (score >= 0.78)
-                                                    return 'search-glow-border-mid';
-                                                return 'search-glow-border-low';
-                                            })()
+                                          : selectedTileIds.has(tile._id)
+                                            ? 'tile-selected-border'
+                                            : (() => {
+                                                  const score =
+                                                      semanticScoreMap.get(
+                                                          tile._id
+                                                      );
+                                                  if (score === undefined)
+                                                      return '';
+                                                  if (score >= 0.85)
+                                                      return 'search-glow-border-high';
+                                                  if (score >= 0.78)
+                                                      return 'search-glow-border-mid';
+                                                  return 'search-glow-border-low';
+                                              })()
                                 }`}
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     if (isDeleteMode) {
                                         onDeleteTile?.(tile._id);
                                     } else {
                                         bringToFront(tile._id);
-                                        onTileClick?.(tile._id);
+                                        onTileClick?.(
+                                            tile._id,
+                                            e.ctrlKey || e.metaKey
+                                        );
                                     }
                                 }}
                             >

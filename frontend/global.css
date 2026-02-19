@@ -111,6 +111,11 @@ html.dark {
     contain: layout style paint;
 }
 
+.tile-selected-border {
+    box-shadow: 0 0 0 2px #5294ff inset;
+    contain: layout style paint;
+}
+
 .search-glow-border-low {
     animation: search-glow-pulse-low 1.5s ease-in-out infinite;
     contain: layout style paint;
