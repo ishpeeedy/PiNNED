@@ -468,6 +468,112 @@ const Board = () => {
         handleTileUpdate(selectedTileId, { zIndex: minZ - 1 });
     };
 
+    const handleContextMenuDelete = async (tileId: string) => {
+        const idsToDelete =
+            selectedTileIds.has(tileId) && selectedTileIds.size > 1
+                ? Array.from(selectedTileIds)
+                : [tileId];
+        for (const id of idsToDelete) {
+            await handleDeleteTile(id);
+        }
+    };
+
+    const handleContextMenuDuplicate = async (tileId: string) => {
+        if (!id) return;
+        const idsToClone =
+            selectedTileIds.has(tileId) && selectedTileIds.size > 1
+                ? Array.from(selectedTileIds)
+                : [tileId];
+        try {
+            const cloned: Tile[] = [];
+            for (const tid of idsToClone) {
+                const src = tiles.find((t) => t._id === tid);
+                if (!src) continue;
+                const newTile = await tileAPI.createTile(id, {
+                    type: src.type,
+                    position: {
+                        x: src.position.x + 20,
+                        y: src.position.y + 20,
+                    },
+                    size: src.size,
+                    style: src.style,
+                    data: src.data,
+                });
+                cloned.push(newTile);
+            }
+            const newTiles = [...tiles, ...cloned];
+            setTiles(newTiles);
+            saveToHistory(newTiles);
+            toast.success(
+                `Duplicated ${cloned.length} tile${cloned.length > 1 ? 's' : ''}`
+            );
+        } catch (error) {
+            console.error('Failed to duplicate tile:', error);
+            toast.error('Failed to duplicate tile');
+        }
+    };
+
+    const handleContextMenuBringToFront = (tileId: string) => {
+        const maxZ = Math.max(...tiles.map((t) => t.zIndex ?? 1), 0);
+        handleTileUpdate(tileId, { zIndex: maxZ + 1 });
+    };
+
+    const handleContextMenuSendToBack = (tileId: string) => {
+        const minZ = Math.min(...tiles.map((t) => t.zIndex ?? 1), 0);
+        handleTileUpdate(tileId, { zIndex: minZ - 1 });
+    };
+
+    const handleContextMenuColorChange = (tileId: string, color: string) => {
+        setLastUsedColor(color);
+        handleTileUpdate(tileId, {
+            style: {
+                ...tiles.find((t) => t._id === tileId)?.style,
+                backgroundColor: color,
+            },
+        });
+    };
+
+    const handleSelectAll = () => {
+        setSelectedTileIds(new Set(tiles.map((t) => t._id)));
+        if (tiles.length > 0) setSelectedTileId(tiles[0]._id);
+    };
+
+    const handleDeselectAll = () => {
+        setSelectedTileIds(new Set());
+        setSelectedTileId(null);
+    };
+
+    const handleResetZoom = () => {
+        setZoom(1);
+    };
+
+    const handleCreateTileAtPosition = async (
+        type: 'text' | 'image' | 'link',
+        position: { x: number; y: number }
+    ) => {
+        if (!id) return;
+        try {
+            const newTile = await tileAPI.createTile(id, {
+                type,
+                position,
+                size: { width: 240, height: 200 },
+                style: {
+                    backgroundColor:
+                        lastUsedColor || board?.settings.tileColor || '#FBBF24',
+                    textColor: '#000000',
+                },
+                data: {},
+            });
+            const newTiles = [...tiles, newTile];
+            setTiles(newTiles);
+            saveToHistory(newTiles);
+            toast.success(`${type} tile created`);
+        } catch (error) {
+            console.error('Failed to create tile:', error);
+            toast.error('Failed to create tile');
+        }
+    };
+
     const handleColorChange = (color: string) => {
         if (!selectedTileId) {
             toast.error('No tile selected');
@@ -598,6 +704,21 @@ const Board = () => {
                     semanticRankMap={semanticRankMap}
                     semanticScoreMap={semanticScoreMap}
                     undoRedoKey={undoRedoKey}
+                    onContextMenuDelete={handleContextMenuDelete}
+                    onContextMenuDuplicate={handleContextMenuDuplicate}
+                    onContextMenuBringToFront={handleContextMenuBringToFront}
+                    onContextMenuSendToBack={handleContextMenuSendToBack}
+                    onContextMenuColorChange={handleContextMenuColorChange}
+                    onContextMenuSelectAll={handleSelectAll}
+                    onContextMenuDeselect={handleDeselectAll}
+                    onContextMenuCreateTile={handleCreateTileAtPosition}
+                    onContextMenuUndo={handleUndo}
+                    onContextMenuRedo={handleRedo}
+                    canUndo={historyIndex > 0 && !isSyncing}
+                    canRedo={historyIndex < history.length - 1 && !isSyncing}
+                    onContextMenuZoomIn={handleZoomIn}
+                    onContextMenuZoomOut={handleZoomOut}
+                    onContextMenuResetZoom={handleResetZoom}
                 />
             </div>
         </div>

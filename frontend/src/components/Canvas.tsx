@@ -4,6 +4,45 @@ import type { Tile, BoardBackground } from '@/types';
 import TextTile from './tiles/TextTile';
 import LinkTile from './tiles/LinkTile';
 import ImageTile from './tiles/ImageTile';
+import {
+    Copy,
+    Trash2,
+    ArrowUpToLine,
+    ArrowDownToLine,
+    Palette,
+    MousePointer2,
+    X as XIcon,
+    Type,
+    Image as ImageIcon,
+    Link2,
+    Undo,
+    Redo,
+    ZoomIn,
+    ZoomOut,
+    Minimize2,
+} from 'lucide-react';
+import {
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuSub,
+    ContextMenuSubContent,
+    ContextMenuSubTrigger,
+    ContextMenuTrigger,
+    ContextMenuShortcut,
+} from '@/components/ui/context-menu';
+
+const TILE_COLORS = [
+    { name: 'Yellow', value: '#FBBF24' },
+    { name: 'Pink', value: '#F472B6' },
+    { name: 'Blue', value: '#60A5FA' },
+    { name: 'Green', value: '#4ADE80' },
+    { name: 'Purple', value: '#C084FC' },
+    { name: 'Orange', value: '#FB923C' },
+    { name: 'Red', value: '#F87171' },
+    { name: 'White', value: '#FFFFFF' },
+];
 
 interface CanvasProps {
     tiles: Tile[];
@@ -25,6 +64,24 @@ interface CanvasProps {
     semanticRankMap?: Map<string, number>;
     semanticScoreMap?: Map<string, number>;
     undoRedoKey?: number;
+    onContextMenuDelete?: (tileId: string) => void;
+    onContextMenuDuplicate?: (tileId: string) => void;
+    onContextMenuBringToFront?: (tileId: string) => void;
+    onContextMenuSendToBack?: (tileId: string) => void;
+    onContextMenuColorChange?: (tileId: string, color: string) => void;
+    onContextMenuSelectAll?: () => void;
+    onContextMenuDeselect?: () => void;
+    onContextMenuCreateTile?: (
+        type: 'text' | 'image' | 'link',
+        position: { x: number; y: number }
+    ) => void;
+    onContextMenuUndo?: () => void;
+    onContextMenuRedo?: () => void;
+    canUndo?: boolean;
+    canRedo?: boolean;
+    onContextMenuZoomIn?: () => void;
+    onContextMenuZoomOut?: () => void;
+    onContextMenuResetZoom?: () => void;
 }
 
 const Canvas = ({
@@ -44,6 +101,21 @@ const Canvas = ({
     semanticRankMap = new Map<string, number>(),
     semanticScoreMap = new Map<string, number>(),
     undoRedoKey = 0,
+    onContextMenuDelete,
+    onContextMenuDuplicate,
+    onContextMenuBringToFront,
+    onContextMenuSendToBack,
+    onContextMenuColorChange,
+    onContextMenuSelectAll,
+    onContextMenuDeselect,
+    onContextMenuCreateTile,
+    onContextMenuUndo,
+    onContextMenuRedo,
+    canUndo = false,
+    canRedo = false,
+    onContextMenuZoomIn,
+    onContextMenuZoomOut,
+    onContextMenuResetZoom,
 }: CanvasProps) => {
     const canvasRef = useRef<HTMLDivElement>(null);
     const panContainerRef = useRef<HTMLDivElement>(null);
@@ -53,6 +125,10 @@ const Canvas = ({
     const dragStartRef = useRef({ x: 0, y: 0 });
     const [isDragOver, setIsDragOver] = useState(false);
     const draggingTileRef = useRef<string | null>(null);
+    const contextMenuCanvasPosRef = useRef<{ x: number; y: number }>({
+        x: 200,
+        y: 200,
+    });
 
     // Track selectedTileIds in a ref so drag handlers always read the latest value
     const selectedTileIdsRef = useRef(selectedTileIds);
@@ -379,173 +455,409 @@ const Canvas = ({
     };
 
     return (
-        <div
-            ref={canvasRef}
-            className={`relative flex-1 overflow-hidden cursor-move select-none ${
-                isDragOver ? 'ring-4 ring-blue-500 ring-inset' : ''
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => onCanvasClick?.()}
-            style={{
-                backgroundColor: 'var(--secondary-background)',
-            }}
-        >
-            {/* Cosmetic background — driven by board settings */}
-            <div
-                className={`absolute inset-0 pointer-events-none ${
-                    useCssClass
-                        ? bgType === 'dots'
-                            ? 'isometric-dots'
-                            : 'grid-pattern'
-                        : ''
-                }`}
-                style={useCssClass ? undefined : bgStyle}
-            />
-
-            {/* Tiles container — pan and zoom separated to keep Rnd coordinate math correct */}
-            <div
-                ref={panContainerRef}
-                className="absolute"
-                style={{
-                    transform: `translate(${pan.x}px, ${pan.y}px)`,
-                    willChange: 'transform',
-                }}
-            >
+        <ContextMenu>
+            <ContextMenuTrigger asChild>
                 <div
+                    ref={canvasRef}
+                    className={`relative flex-1 overflow-hidden cursor-move select-none ${
+                        isDragOver ? 'ring-4 ring-blue-500 ring-inset' : ''
+                    }`}
+                    onContextMenu={(e) => {
+                        if (!canvasRef.current) return;
+                        const rect = canvasRef.current.getBoundingClientRect();
+                        contextMenuCanvasPosRef.current = {
+                            x: Math.round(
+                                (e.clientX - rect.left - panRef.current.x) /
+                                    zoomRef.current
+                            ),
+                            y: Math.round(
+                                (e.clientY - rect.top - panRef.current.y) /
+                                    zoomRef.current
+                            ),
+                        };
+                    }}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => onCanvasClick?.()}
                     style={{
-                        transform: `scale(${zoom})`,
-                        transformOrigin: '0 0',
+                        backgroundColor: 'var(--secondary-background)',
                     }}
                 >
-                    {tiles.map((tile) => (
-                        <Rnd
-                            key={`${tile._id}-${undoRedoKey}`}
-                            position={{
-                                x: tile.position.x,
-                                y: tile.position.y,
-                            }}
-                            size={{
-                                width: tile.size.width,
-                                height: tile.size.height,
-                            }}
-                            dragHandleClassName="tile-drag-handle"
-                            minWidth={80}
-                            minHeight={80}
-                            scale={zoom}
-                            disableDragging={true}
-                            enableResizing={
-                                !isDeleteMode
-                                    ? {
-                                          bottom: true,
-                                          bottomLeft: true,
-                                          bottomRight: true,
-                                          left: true,
-                                          right: true,
-                                          top: true,
-                                          topLeft: true,
-                                          topRight: true,
-                                      }
-                                    : false
-                            }
-                            style={{ zIndex: tile.zIndex ?? 1 }}
-                            onResizeStop={(_, __, ref, ___, position) => {
-                                onTileUpdate?.(tile._id, {
-                                    size: {
-                                        width: parseInt(ref.style.width),
-                                        height: parseInt(ref.style.height),
-                                    },
-                                    position,
-                                });
+                    {/* Cosmetic background — driven by board settings */}
+                    <div
+                        className={`absolute inset-0 pointer-events-none ${
+                            useCssClass
+                                ? bgType === 'dots'
+                                    ? 'isometric-dots'
+                                    : 'grid-pattern'
+                                : ''
+                        }`}
+                        style={useCssClass ? undefined : bgStyle}
+                    />
+
+                    {/* Tiles container — pan and zoom separated to keep Rnd coordinate math correct */}
+                    <div
+                        ref={panContainerRef}
+                        className="absolute"
+                        style={{
+                            transform: `translate(${pan.x}px, ${pan.y}px)`,
+                            willChange: 'transform',
+                        }}
+                    >
+                        <div
+                            style={{
+                                transform: `scale(${zoom})`,
+                                transformOrigin: '0 0',
                             }}
                         >
-                            <div
-                                data-tile-id={tile._id}
-                                className={`relative h-full w-full flex flex-col select-none ${
-                                    isDeleteMode
-                                        ? 'delete-glow-border cursor-pointer'
-                                        : focusedSearchId === tile._id
-                                          ? 'drag-glow-border'
-                                          : selectedTileIds.has(tile._id)
-                                            ? 'tile-selected-border'
-                                            : (() => {
-                                                  const score =
-                                                      semanticScoreMap.get(
-                                                          tile._id
-                                                      );
-                                                  if (score === undefined)
-                                                      return '';
-                                                  if (score >= 0.85)
-                                                      return 'search-glow-border-high';
-                                                  if (score >= 0.78)
-                                                      return 'search-glow-border-mid';
-                                                  return 'search-glow-border-low';
-                                              })()
-                                }`}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isDeleteMode) {
-                                        onDeleteTile?.(tile._id);
-                                    } else {
-                                        bringToFront(tile._id);
-                                        onTileClick?.(
-                                            tile._id,
-                                            e.ctrlKey || e.metaKey
-                                        );
+                            {tiles.map((tile) => (
+                                <Rnd
+                                    key={`${tile._id}-${undoRedoKey}`}
+                                    position={{
+                                        x: tile.position.x,
+                                        y: tile.position.y,
+                                    }}
+                                    size={{
+                                        width: tile.size.width,
+                                        height: tile.size.height,
+                                    }}
+                                    dragHandleClassName="tile-drag-handle"
+                                    minWidth={80}
+                                    minHeight={80}
+                                    scale={zoom}
+                                    disableDragging={true}
+                                    enableResizing={
+                                        !isDeleteMode
+                                            ? {
+                                                  bottom: true,
+                                                  bottomLeft: true,
+                                                  bottomRight: true,
+                                                  left: true,
+                                                  right: true,
+                                                  top: true,
+                                                  topLeft: true,
+                                                  topRight: true,
+                                              }
+                                            : false
                                     }
-                                }}
-                            >
-                                {/* Drag handle bar */}
-                                <div className="tile-drag-handle bg-black/5 h-[40px] flex items-center justify-center flex-shrink-0 cursor-default hover:cursor-grab active:cursor-grabbing transition-colors hover:bg-black/8">
-                                    {semanticRankMap.has(tile._id) && (
-                                        <span className="absolute top-2 right-2 z-10 text-xs font-bold leading-none px-2 py-1 rounded-full bg-[#5294ff] text-white pointer-events-none shadow-md">
-                                            #{semanticRankMap.get(tile._id)}
-                                        </span>
-                                    )}
-                                </div>
-                                {/* Tile content */}
-                                <div className="flex-1 overflow-hidden select-text">
-                                    {tile.type === 'text' && (
-                                        <TextTile
-                                            tile={tile}
-                                            onUpdate={(updates) =>
-                                                onTileUpdate?.(
-                                                    tile._id,
-                                                    updates
-                                                )
-                                            }
-                                        />
-                                    )}
-                                    {tile.type === 'link' && (
-                                        <LinkTile
-                                            tile={tile}
-                                            onUpdate={(updates) =>
-                                                onTileUpdate?.(
-                                                    tile._id,
-                                                    updates
-                                                )
-                                            }
-                                        />
-                                    )}
-                                    {tile.type === 'image' && (
-                                        <ImageTile
-                                            tile={tile}
-                                            onUpdate={(updates) =>
-                                                onTileUpdate?.(
-                                                    tile._id,
-                                                    updates
-                                                )
-                                            }
-                                        />
-                                    )}
-                                </div>
-                            </div>
-                        </Rnd>
-                    ))}
+                                    style={{ zIndex: tile.zIndex ?? 1 }}
+                                    onResizeStop={(
+                                        _,
+                                        __,
+                                        ref,
+                                        ___,
+                                        position
+                                    ) => {
+                                        onTileUpdate?.(tile._id, {
+                                            size: {
+                                                width: parseInt(
+                                                    ref.style.width
+                                                ),
+                                                height: parseInt(
+                                                    ref.style.height
+                                                ),
+                                            },
+                                            position,
+                                        });
+                                    }}
+                                >
+                                    <ContextMenu>
+                                        <ContextMenuTrigger asChild>
+                                            <div
+                                                data-tile-id={tile._id}
+                                                className={`relative h-full w-full flex flex-col select-none ${
+                                                    isDeleteMode
+                                                        ? 'delete-glow-border cursor-pointer'
+                                                        : focusedSearchId ===
+                                                            tile._id
+                                                          ? 'drag-glow-border'
+                                                          : selectedTileIds.has(
+                                                                  tile._id
+                                                              )
+                                                            ? 'tile-selected-border'
+                                                            : (() => {
+                                                                  const score =
+                                                                      semanticScoreMap.get(
+                                                                          tile._id
+                                                                      );
+                                                                  if (
+                                                                      score ===
+                                                                      undefined
+                                                                  )
+                                                                      return '';
+                                                                  if (
+                                                                      score >=
+                                                                      0.85
+                                                                  )
+                                                                      return 'search-glow-border-high';
+                                                                  if (
+                                                                      score >=
+                                                                      0.78
+                                                                  )
+                                                                      return 'search-glow-border-mid';
+                                                                  return 'search-glow-border-low';
+                                                              })()
+                                                }`}
+                                                onContextMenu={(e) => {
+                                                    e.stopPropagation();
+                                                    if (
+                                                        !selectedTileIds.has(
+                                                            tile._id
+                                                        )
+                                                    ) {
+                                                        onTileClick?.(
+                                                            tile._id,
+                                                            false
+                                                        );
+                                                    }
+                                                }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (isDeleteMode) {
+                                                        onDeleteTile?.(
+                                                            tile._id
+                                                        );
+                                                    } else {
+                                                        bringToFront(tile._id);
+                                                        onTileClick?.(
+                                                            tile._id,
+                                                            e.ctrlKey ||
+                                                                e.metaKey
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                {/* Drag handle bar */}
+                                                <div className="tile-drag-handle bg-black/5 h-[40px] flex items-center justify-center flex-shrink-0 cursor-default hover:cursor-grab active:cursor-grabbing transition-colors hover:bg-black/8">
+                                                    {semanticRankMap.has(
+                                                        tile._id
+                                                    ) && (
+                                                        <span className="absolute top-2 right-2 z-10 text-xs font-bold leading-none px-2 py-1 rounded-full bg-[#5294ff] text-white pointer-events-none shadow-md">
+                                                            #
+                                                            {semanticRankMap.get(
+                                                                tile._id
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {/* Tile content */}
+                                                <div className="flex-1 overflow-hidden select-text">
+                                                    {tile.type === 'text' && (
+                                                        <TextTile
+                                                            tile={tile}
+                                                            onUpdate={(
+                                                                updates
+                                                            ) =>
+                                                                onTileUpdate?.(
+                                                                    tile._id,
+                                                                    updates
+                                                                )
+                                                            }
+                                                        />
+                                                    )}
+                                                    {tile.type === 'link' && (
+                                                        <LinkTile
+                                                            tile={tile}
+                                                            onUpdate={(
+                                                                updates
+                                                            ) =>
+                                                                onTileUpdate?.(
+                                                                    tile._id,
+                                                                    updates
+                                                                )
+                                                            }
+                                                        />
+                                                    )}
+                                                    {tile.type === 'image' && (
+                                                        <ImageTile
+                                                            tile={tile}
+                                                            onUpdate={(
+                                                                updates
+                                                            ) =>
+                                                                onTileUpdate?.(
+                                                                    tile._id,
+                                                                    updates
+                                                                )
+                                                            }
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </ContextMenuTrigger>
+                                        <ContextMenuContent className="w-56">
+                                            <ContextMenuItem
+                                                onSelect={() =>
+                                                    onContextMenuDuplicate?.(
+                                                        tile._id
+                                                    )
+                                                }
+                                            >
+                                                <Copy className="mr-2 h-4 w-4" />
+                                                {selectedTileIds.has(
+                                                    tile._id
+                                                ) && selectedTileIds.size > 1
+                                                    ? `Duplicate (${selectedTileIds.size})`
+                                                    : 'Duplicate'}
+                                            </ContextMenuItem>
+                                            <ContextMenuItem
+                                                onSelect={() =>
+                                                    onContextMenuDelete?.(
+                                                        tile._id
+                                                    )
+                                                }
+                                                className="text-red-500 focus:text-red-500"
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                {selectedTileIds.has(
+                                                    tile._id
+                                                ) && selectedTileIds.size > 1
+                                                    ? `Delete (${selectedTileIds.size})`
+                                                    : 'Delete'}
+                                            </ContextMenuItem>
+                                            <ContextMenuSeparator />
+                                            <ContextMenuItem
+                                                onSelect={() =>
+                                                    onContextMenuBringToFront?.(
+                                                        tile._id
+                                                    )
+                                                }
+                                            >
+                                                <ArrowUpToLine className="mr-2 h-4 w-4" />{' '}
+                                                Bring to Front
+                                            </ContextMenuItem>
+                                            <ContextMenuItem
+                                                onSelect={() =>
+                                                    onContextMenuSendToBack?.(
+                                                        tile._id
+                                                    )
+                                                }
+                                            >
+                                                <ArrowDownToLine className="mr-2 h-4 w-4" />{' '}
+                                                Send to Back
+                                            </ContextMenuItem>
+                                            <ContextMenuSeparator />
+                                            <ContextMenuSub>
+                                                <ContextMenuSubTrigger>
+                                                    <Palette className="mr-2 h-4 w-4" />{' '}
+                                                    Change Color
+                                                </ContextMenuSubTrigger>
+                                                <ContextMenuSubContent className="w-44">
+                                                    {TILE_COLORS.map((c) => (
+                                                        <ContextMenuItem
+                                                            key={c.value}
+                                                            onSelect={() =>
+                                                                onContextMenuColorChange?.(
+                                                                    tile._id,
+                                                                    c.value
+                                                                )
+                                                            }
+                                                        >
+                                                            <span
+                                                                className="mr-2 h-4 w-4 rounded-sm border border-border inline-block flex-shrink-0"
+                                                                style={{
+                                                                    backgroundColor:
+                                                                        c.value,
+                                                                }}
+                                                            />
+                                                            {c.label}
+                                                        </ContextMenuItem>
+                                                    ))}
+                                                </ContextMenuSubContent>
+                                            </ContextMenuSub>
+                                            <ContextMenuSeparator />
+                                            <ContextMenuItem
+                                                onSelect={() =>
+                                                    onContextMenuSelectAll?.()
+                                                }
+                                            >
+                                                <MousePointer2 className="mr-2 h-4 w-4" />{' '}
+                                                Select All
+                                            </ContextMenuItem>
+                                            <ContextMenuItem
+                                                onSelect={() =>
+                                                    onContextMenuDeselect?.()
+                                                }
+                                            >
+                                                <XIcon className="mr-2 h-4 w-4" />{' '}
+                                                Deselect
+                                            </ContextMenuItem>
+                                        </ContextMenuContent>
+                                    </ContextMenu>
+                                </Rnd>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </ContextMenuTrigger>
+            <ContextMenuContent className="w-52">
+                <ContextMenuItem
+                    onSelect={() =>
+                        onContextMenuCreateTile?.(
+                            'text',
+                            contextMenuCanvasPosRef.current
+                        )
+                    }
+                >
+                    <Type className="mr-2 h-4 w-4" /> Add Text Tile
+                </ContextMenuItem>
+                <ContextMenuItem
+                    onSelect={() =>
+                        onContextMenuCreateTile?.(
+                            'image',
+                            contextMenuCanvasPosRef.current
+                        )
+                    }
+                >
+                    <ImageIcon className="mr-2 h-4 w-4" /> Add Image Tile
+                </ContextMenuItem>
+                <ContextMenuItem
+                    onSelect={() =>
+                        onContextMenuCreateTile?.(
+                            'link',
+                            contextMenuCanvasPosRef.current
+                        )
+                    }
+                >
+                    <Link2 className="mr-2 h-4 w-4" /> Add Link Tile
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                    onSelect={() => onContextMenuUndo?.()}
+                    disabled={!canUndo}
+                >
+                    <Undo className="mr-2 h-4 w-4" /> Undo
+                    <ContextMenuShortcut>Ctrl+Z</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuItem
+                    onSelect={() => onContextMenuRedo?.()}
+                    disabled={!canRedo}
+                >
+                    <Redo className="mr-2 h-4 w-4" /> Redo
+                    <ContextMenuShortcut>Ctrl+Y</ContextMenuShortcut>
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                    onSelect={() => onContextMenuZoomIn?.()}
+                    disabled={zoom >= 2}
+                >
+                    <ZoomIn className="mr-2 h-4 w-4" /> Zoom In
+                </ContextMenuItem>
+                <ContextMenuItem
+                    onSelect={() => onContextMenuZoomOut?.()}
+                    disabled={zoom <= 0.25}
+                >
+                    <ZoomOut className="mr-2 h-4 w-4" /> Zoom Out
+                </ContextMenuItem>
+                <ContextMenuItem onSelect={() => onContextMenuResetZoom?.()}>
+                    <Minimize2 className="mr-2 h-4 w-4" /> Reset Zoom
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem onSelect={() => onContextMenuSelectAll?.()}>
+                    <MousePointer2 className="mr-2 h-4 w-4" /> Select All
+                </ContextMenuItem>
+            </ContextMenuContent>
+        </ContextMenu>
     );
 };
 
