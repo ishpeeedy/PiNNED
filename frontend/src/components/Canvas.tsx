@@ -95,7 +95,7 @@ const Canvas = ({
     onTileClick,
     onCanvasClick,
     selectedTileIds = new Set<string>(),
-    searchMatchIds = new Set<string>(),
+    searchMatchIds: _searchMatchIds = new Set<string>(),
     focusedSearchId = null,
     targetPan = null,
     semanticRankMap = new Map<string, number>(),
@@ -191,7 +191,14 @@ const Canvas = ({
                 : [draggedId];
 
             // Gather DOM info for each tile in the group
-            const tileEntries: typeof tileDragRef.current.tiles = [];
+            const tileEntries: {
+                tileId: string;
+                rndEl: HTMLElement;
+                startX: number;
+                startY: number;
+                currentX: number;
+                currentY: number;
+            }[] = [];
             for (const tileId of tileIds) {
                 const el = document.querySelector(
                     `[data-tile-id="${tileId}"]`
@@ -760,7 +767,7 @@ const Canvas = ({
                                                                         c.value,
                                                                 }}
                                                             />
-                                                            {c.label}
+                                                            {c.name}
                                                         </ContextMenuItem>
                                                     ))}
                                                 </ContextMenuSubContent>
