@@ -37,6 +37,7 @@ const Board = () => {
     } | null>(null);
     const panVersionRef = useRef(0);
     const canvasContainerRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     // Search: filter tiles by query across all text fields
     const searchResults = useMemo(() => {
@@ -277,6 +278,15 @@ const Board = () => {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             const ctrl = e.ctrlKey || e.metaKey;
+
+            // Ctrl+F: focus search bar (checked before isEditing guard)
+            if (ctrl && e.key === 'f') {
+                e.preventDefault();
+                searchInputRef.current?.focus();
+                searchInputRef.current?.select();
+                return;
+            }
+
             // Skip when typing in an input, textarea, or contentEditable
             const tag = (document.activeElement as HTMLElement)?.tagName;
             const isEditing =
@@ -685,6 +695,7 @@ const Board = () => {
                 onSearchPrev={handleSearchPrev}
                 onSemanticSearch={handleSemanticSearch}
                 isSemanticSearching={isSemanticSearching}
+                searchInputRef={searchInputRef}
             />
             <div ref={canvasContainerRef} className="flex-1 flex flex-col">
                 <Canvas

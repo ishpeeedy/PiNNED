@@ -1,3 +1,4 @@
+import { type RefObject } from 'react';
 import {
     Type,
     Image,
@@ -44,6 +45,7 @@ interface ToolbarProps {
     onSearchPrev?: () => void;
     onSemanticSearch?: () => void;
     isSemanticSearching?: boolean;
+    searchInputRef?: RefObject<HTMLInputElement>;
 }
 
 const Toolbar = ({
@@ -69,6 +71,7 @@ const Toolbar = ({
     onSearchPrev,
     onSemanticSearch,
     isSemanticSearching = false,
+    searchInputRef,
 }: ToolbarProps) => {
     const handleCreateTile = (type: 'text' | 'image' | 'link') => {
         if (isDeleteMode) {
@@ -180,6 +183,7 @@ const Toolbar = ({
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-foreground/60" />
                         <Input
+                            ref={searchInputRef}
                             type="text"
                             placeholder="Search tiles..."
                             className="pl-10 pr-8 text-black dark:text-white"
@@ -211,7 +215,11 @@ const Toolbar = ({
                     </div>
                     <Button
                         onClick={onSemanticSearch}
-                        disabled={!searchQuery || searchQuery.trim().length < 2 || isSemanticSearching}
+                        disabled={
+                            !searchQuery ||
+                            searchQuery.trim().length < 2 ||
+                            isSemanticSearching
+                        }
                         variant="neutral"
                         className="h-9 w-9 p-0 shrink-0"
                         title="AI semantic search"
