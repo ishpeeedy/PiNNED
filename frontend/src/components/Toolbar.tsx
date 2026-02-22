@@ -45,7 +45,7 @@ interface ToolbarProps {
     onSearchPrev?: () => void;
     onSemanticSearch?: () => void;
     isSemanticSearching?: boolean;
-    searchInputRef?: RefObject<HTMLInputElement>;
+    searchInputRef?: RefObject<HTMLInputElement | null>;
 }
 
 const Toolbar = ({
