@@ -1,5 +1,65 @@
 export const changelogData = [
     {
+        version: '2.8',
+        date: 'Feb 22, 2026',
+        changes: [
+            'Added Ctrl+F keyboard shortcut to instantly focus and select the search bar from anywhere on the page',
+            'Fixed multiple canvas bugs introduced by the context menu structural changes',
+            'Fixed TypeScript type mismatch on the search input ref for React 19 compatibility',
+        ],
+    },
+    {
+        version: '2.7',
+        date: 'Feb 21, 2026',
+        changes: [
+            'Added right-click context menu on tiles — duplicate (with multi-select count), delete, bring to front, send to back, change color via sub-menu, select all, deselect',
+            'Added right-click context menu on the canvas — add text/image/link tile at cursor position, undo, redo, zoom in/out/reset, select all',
+            'Right-clicking an unselected tile now auto-selects it before the menu opens',
+            'Color sub-menu shows all 8 palette colors with swatches',
+        ],
+    },
+    {
+        version: '2.6',
+        date: 'Feb 19, 2026',
+        changes: [
+            'Added multi-select — hold Ctrl (or ⌘ on Mac) and click tiles to build a selection',
+            'Multi-selected tiles can be dragged together as a group, maintaining relative positions',
+            'Delete, duplicate, and color actions in the context menu apply to the entire selection',
+        ],
+    },
+    {
+        version: '2.5',
+        date: 'Feb 17, 2026',
+        changes: [
+            'Added keyboard shortcuts: Ctrl+Z for undo, Ctrl+Y / Ctrl+Shift+Z for redo',
+            'Shortcuts are blocked when focus is inside an input, textarea, or contentEditable to avoid conflicts',
+        ],
+    },
+    {
+        version: '2.4',
+        date: 'Feb 16, 2026',
+        changes: [
+            'Fixed tile dragging at non-1x zoom levels — tiles now track the cursor correctly at any zoom',
+        ],
+    },
+    {
+        version: '2.3',
+        date: 'Feb 15, 2026',
+        changes: [
+            'Added AI semantic search (beta) — search tiles by meaning, not just exact keywords, powered by Google Gemini embeddings',
+            'Optimised semantic search score thresholds for more relevant results',
+            'Search result tiles now glow with variable intensity based on their relevance score — brighter glow means a stronger match',
+            'Semantic rank badges show on matching tiles (#1, #2, #3...)',
+        ],
+    },
+    {
+        version: '2.2',
+        date: 'Feb 10, 2026',
+        changes: [
+            'Added a health-check ping on the home page to wake up the Render backend before users reach the dashboard, reducing cold start wait times',
+        ],
+    },
+    {
         version: '2.1',
         date: 'Feb 09, 2026',
         changes: [
