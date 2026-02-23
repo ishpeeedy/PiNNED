@@ -117,9 +117,7 @@ export const changelogData = [
     {
         version: '1.6',
         date: 'Feb 02, 2026',
-        changes: [
-            'Fixed page failing to load on initial deployment to Render',
-        ],
+        changes: ['Fixed page failing to load on initial deployment to Render'],
     },
     {
         version: '1.5',
