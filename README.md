@@ -16,8 +16,8 @@
 ![Render](https://img.shields.io/badge/Render-%23000000.svg?style=for-the-badge&logo=render&logoColor=a985ff)
 
 <div align="center">
-  <a href="https://pinned-djvw.onrender.com/">
-    <img src="https://res.cloudinary.com/dzwjyg2ai/image/upload/v1773132281/IMP_Resources/github_assets/PiNNED_loader_upcipz.svg" width="400" />
+  <a href="https://blinkurl-ppd2.onrender.com/">
+    <img src="https://res.cloudinary.com/dzwjyg2ai/image/upload/v1773131889/IMP_Resources/github_assets/BlinkURL_loader_vhu2yj.svg" width="400" />
   </a>
 </div>
 
