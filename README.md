@@ -15,11 +15,11 @@
 ![Gemini AI](https://img.shields.io/badge/Gemini_AI-%23000000.svg?style=for-the-badge&logo=googlegemini&logoColor=a985ff)
 ![Render](https://img.shields.io/badge/Render-%23000000.svg?style=for-the-badge&logo=render&logoColor=a985ff)
 
-<center>
-
-[![Live](https://img.shields.io/badge/Live_Deployment-%23ffffff.svg?style=for-the-badge&logo=googlechrome&logoColor=000000)](https://pinned-djvw.onrender.com/)
-
-</center>
+<div align="center">
+  <a href="https://pinned-djvw.onrender.com/">
+    <img src="https://res.cloudinary.com/dzwjyg2ai/image/upload/v1773132281/IMP_Resources/github_assets/PiNNED_loader_upcipz.svg" width="400" />
+  </a>
+</div>
 
 ## Features
 
