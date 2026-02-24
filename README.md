@@ -17,7 +17,7 @@
 
 <div align="center">
   <a href="https://blinkurl-ppd2.onrender.com/">
-    <img src="https://res.cloudinary.com/dzwjyg2ai/image/upload/v1773131889/IMP_Resources/github_assets/BlinkURL_loader_vhu2yj.svg" width="400" />
+    <img src="https://res.cloudinary.com/dzwjyg2ai/image/upload/v1773207656/IMP_Resources/github_assets/PiNNED_loader_hboirh.svg" width="400" />
   </a>
 </div>
 
