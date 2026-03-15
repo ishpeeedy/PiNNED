@@ -14,9 +14,10 @@
 ![Cloudinary](https://img.shields.io/badge/Cloudinary-%23000000.svg?style=for-the-badge&logo=cloudinary&logoColor=a985ff)
 ![Gemini AI](https://img.shields.io/badge/Gemini_AI-%23000000.svg?style=for-the-badge&logo=googlegemini&logoColor=a985ff)
 ![Render](https://img.shields.io/badge/Render-%23000000.svg?style=for-the-badge&logo=render&logoColor=a985ff)
+![Vercel](https://img.shields.io/badge/Vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=a985ff)
 
 <div align="center">
-  <a href="https://blinkurl-ppd2.onrender.com/">
+  <a href="https://pinned.ishpeeedy.dev">
     <img src="https://res.cloudinary.com/dzwjyg2ai/image/upload/v1773207656/IMP_Resources/github_assets/PiNNED_loader_hboirh.svg" width="400" />
   </a>
 </div>
