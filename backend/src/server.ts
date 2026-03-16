@@ -33,11 +33,6 @@ app.use(
     })
 );
 app.use(express.json());
-app.use('/api/auth', authRoutes);
-app.use('/api/boards', boardRoutes);
-app.use('/api', tileRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/api/metadata', metadataRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({
@@ -46,6 +41,12 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString(),
     });
 });
+
+app.use('/api/auth', authRoutes);
+app.use('/api/boards', boardRoutes);
+app.use('/api', tileRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/metadata', metadataRoutes);
 
 async function run() {
     try {
