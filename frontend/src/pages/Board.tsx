@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { boardAPI, tileAPI } from '@/services/api';
+import { boardAPI, metadataAPI, tileAPI } from '@/services/api';
 import type { Board as BoardType, Tile } from '@/types';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
@@ -312,6 +312,8 @@ const Board = () => {
     }, [handleUndo, handleRedo]);
 
     useEffect(() => {
+        let cancelled = false;
+
         const fetchData = async () => {
             if (!id) return;
 
@@ -327,6 +329,101 @@ const Board = () => {
                 // Initialize history
                 setHistory([JSON.parse(JSON.stringify(tilesData))]);
                 setHistoryIndex(0);
+
+                const linkTilesNeedingMetadata = tilesData.filter(
+                    (tile) =>
+                        tile.type === 'link' &&
+                        !!tile.data?.linkUrl &&
+                        tile.data.linkUrl.startsWith('http') &&
+                        (!tile.data?.thumbnailUrl ||
+                            !tile.data?.linkTitle ||
+                            !tile.data?.linkDescription)
+                );
+
+                if (linkTilesNeedingMetadata.length > 0) {
+                    const mergedUpdates = new Map<string, Tile['data']>();
+                    const batchSize = 4;
+
+                    for (
+                        let i = 0;
+                        i < linkTilesNeedingMetadata.length;
+                        i += batchSize
+                    ) {
+                        const batch = linkTilesNeedingMetadata.slice(
+                            i,
+                            i + batchSize
+                        );
+
+                        const batchResults = await Promise.allSettled(
+                            batch.map(async (tile) => {
+                                const metadata =
+                                    await metadataAPI.fetchMetadata(
+                                        tile.data.linkUrl!
+                                    );
+
+                                const nextData: Tile['data'] = {
+                                    ...(tile.data || {}),
+                                    linkTitle:
+                                        tile.data?.linkTitle ||
+                                        metadata.title ||
+                                        '',
+                                    linkDescription:
+                                        tile.data?.linkDescription ||
+                                        metadata.description ||
+                                        '',
+                                    thumbnailUrl:
+                                        tile.data?.thumbnailUrl ||
+                                        metadata.image ||
+                                        '',
+                                    author:
+                                        tile.data?.author ||
+                                        metadata.author ||
+                                        '',
+                                    publishDate:
+                                        tile.data?.publishDate ||
+                                        metadata.date ||
+                                        '',
+                                };
+
+                                await tileAPI.updateTile(id, tile._id, {
+                                    data: nextData,
+                                });
+
+                                return {
+                                    tileId: tile._id,
+                                    data: nextData,
+                                };
+                            })
+                        );
+
+                        batchResults.forEach((result) => {
+                            if (result.status === 'fulfilled') {
+                                mergedUpdates.set(
+                                    result.value.tileId,
+                                    result.value.data
+                                );
+                            }
+                        });
+
+                        if (cancelled) return;
+                    }
+
+                    if (!cancelled && mergedUpdates.size > 0) {
+                        setTiles((prev) =>
+                            prev.map((tile) => {
+                                const updatedData = mergedUpdates.get(tile._id);
+                                if (!updatedData) return tile;
+                                return {
+                                    ...tile,
+                                    data: {
+                                        ...tile.data,
+                                        ...updatedData,
+                                    },
+                                };
+                            })
+                        );
+                    }
+                }
             } catch (error) {
                 console.error('Failed to fetch board:', error);
                 toast.error('Failed to load board');
@@ -336,6 +433,10 @@ const Board = () => {
         };
 
         fetchData();
+
+        return () => {
+            cancelled = true;
+        };
     }, [id]);
 
     if (loading) {
