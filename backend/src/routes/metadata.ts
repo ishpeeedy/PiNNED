@@ -8,6 +8,7 @@ import metascraperLogo from 'metascraper-logo';
 import metascraperTitle from 'metascraper-title';
 import metascraperUrl from 'metascraper-url';
 import { authenticateToken } from '../middleware/auth';
+import { cacheLinkThumbnail } from '../services/thumbnailCache.ts';
 
 const router = express.Router();
 
@@ -50,10 +51,19 @@ router.get('/', async (req: Request, res: Response) => {
         // Extract metadata
         const metadata = await scraper({ html, url: targetUrl });
 
+        let cachedThumbnail = metadata.image || '';
+        if (cachedThumbnail) {
+            try {
+                cachedThumbnail = await cacheLinkThumbnail(cachedThumbnail);
+            } catch (cacheError) {
+                console.error('Thumbnail cache error:', cacheError);
+            }
+        }
+
         return res.json({
             title: metadata.title || '',
             description: metadata.description || '',
-            image: metadata.image || '',
+            image: cachedThumbnail,
             logo: metadata.logo || '',
             author: metadata.author || '',
             date: metadata.date || '',

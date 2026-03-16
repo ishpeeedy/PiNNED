@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { metadataAPI } from '@/services/api';
 import { toast } from 'sonner';
+import loaderSvg from '@/assets/loader.svg';
 
 interface LinkTileProps {
     tile: Tile;
@@ -24,6 +25,7 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
     const [publishDate, setPublishDate] = useState(
         tile.data?.publishDate || ''
     );
+    const [thumbnailFailed, setThumbnailFailed] = useState(false);
     const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
     const urlInputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -33,6 +35,29 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
             urlInputRef.current.focus();
         }
     }, [isEditing]);
+
+    useEffect(() => {
+        if (isEditing) return;
+
+        setLinkUrl(tile.data?.linkUrl || '');
+        setLinkTitle(tile.data?.linkTitle || '');
+        setLinkDescription(tile.data?.linkDescription || '');
+        setThumbnailUrl(tile.data?.thumbnailUrl || '');
+        setAuthor(tile.data?.author || '');
+        setPublishDate(tile.data?.publishDate || '');
+    }, [
+        isEditing,
+        tile.data?.linkUrl,
+        tile.data?.linkTitle,
+        tile.data?.linkDescription,
+        tile.data?.thumbnailUrl,
+        tile.data?.author,
+        tile.data?.publishDate,
+    ]);
+
+    useEffect(() => {
+        setThumbnailFailed(false);
+    }, [thumbnailUrl]);
 
     const handleSave = () => {
         setIsEditing(false);
@@ -164,18 +189,26 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                             overflowWrap: 'break-word',
                         }}
                     >
-                        {thumbnailUrl && (
+                        {thumbnailUrl && !thumbnailFailed ? (
                             <div className="flex justify-center">
                                 <img
                                     src={thumbnailUrl}
                                     alt={linkTitle || 'Link preview'}
                                     className="max-w-full h-auto max-h-48 rounded-base border-2 border-border"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
+                                    onError={() => {
+                                        setThumbnailFailed(true);
                                     }}
                                 />
                             </div>
-                        )}
+                        ) : linkUrl ? (
+                            <div className="flex justify-center">
+                                <img
+                                    src={loaderSvg}
+                                    alt="Thumbnail unavailable"
+                                    className="max-w-full h-auto max-h-48 rounded-base border-2 border-border p-4"
+                                />
+                            </div>
+                        ) : null}
                         {linkTitle && (
                             <h3 className="text-lg font-bold text-black">
                                 {linkTitle}
