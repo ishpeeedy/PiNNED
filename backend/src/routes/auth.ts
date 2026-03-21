@@ -5,6 +5,16 @@ import { authenticateToken, AuthRequest } from '../middleware/auth.ts';
 
 const router = express.Router();
 
+function getJwtSecret() {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+        throw new Error(
+            'JWT_SECRET is required and must be set in environment'
+        );
+    }
+    return jwtSecret;
+}
+
 router.post('/register', async (req: Request, res: Response) => {
     try {
         const { email, password, name } = req.body;
@@ -14,9 +24,10 @@ router.post('/register', async (req: Request, res: Response) => {
         }
         const user = new User({ email, password, name });
         await user.save();
+        const jwtSecret = getJwtSecret();
         const token = jwt.sign(
             { userId: user._id, email: user.email },
-            process.env.JWT_SECRET || 'fallback-secret-key',
+            jwtSecret,
             { expiresIn: '7d' }
         );
         res.status(201).json({
@@ -44,9 +55,10 @@ router.post('/login', async (req: Request, res: Response) => {
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+        const jwtSecret = getJwtSecret();
         const token = jwt.sign(
             { userId: user._id, email: user.email },
-            process.env.JWT_SECRET || 'fallback-secret-key',
+            jwtSecret,
             { expiresIn: '7d' }
         );
         res.json({
