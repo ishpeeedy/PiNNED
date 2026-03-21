@@ -16,6 +16,7 @@ import boardRoutes from './routes/board.ts';
 import tileRoutes from './routes/tile.ts';
 import uploadRoutes from './routes/upload.ts';
 import metadataRoutes from './routes/metadata.ts';
+import healthRoutes from './routes/health.ts';
 import { initializeCloudinary } from './config/cloudinary.ts';
 import { initializeGemini } from './config/gemini.ts';
 
@@ -33,14 +34,7 @@ app.use(
     })
 );
 app.use(express.json());
-
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        message: 'PiNNED backend is running smoothly',
-        timestamp: new Date().toISOString(),
-    });
-});
+app.use(healthRoutes);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardRoutes);
