@@ -2,6 +2,19 @@ import axios from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
 import type { Board, CreateBoardData, Tile, CreateTileData } from '@/types';
 
+export interface MetadataResponse {
+    title: string;
+    description: string;
+    image: string;
+    logo: string;
+    author: string;
+    date: string;
+    url: string;
+    hasPreviewData: boolean;
+    provider: string;
+    isLimited: boolean;
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
@@ -131,7 +144,7 @@ export const tileAPI = {
 
 export const metadataAPI = {
     fetchMetadata: async (url: string) => {
-        const response = await api.get('/api/metadata', {
+        const response = await api.get<MetadataResponse>('/api/metadata', {
             params: { url },
         });
         return response.data;

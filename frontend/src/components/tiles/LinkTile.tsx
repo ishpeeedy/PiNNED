@@ -11,6 +11,50 @@ interface LinkTileProps {
     onUpdate?: (updates: Partial<Tile>) => void;
 }
 
+type LimitedProvider =
+    | 'instagram'
+    | 'x'
+    | 'twitter'
+    | 'facebook'
+    | 'reddit'
+    | null;
+
+function getLimitedProviderFromUrl(url: string): LimitedProvider {
+    if (!url) return null;
+
+    try {
+        const host = new URL(url).hostname.replace(/^www\./i, '').toLowerCase();
+
+        if (host === 'instagram.com' || host.endsWith('.instagram.com')) {
+            return 'instagram';
+        }
+        if (host === 'x.com' || host.endsWith('.x.com')) return 'x';
+        if (host === 'twitter.com' || host.endsWith('.twitter.com')) {
+            return 'twitter';
+        }
+        if (host === 'facebook.com' || host.endsWith('.facebook.com')) {
+            return 'facebook';
+        }
+        if (host === 'reddit.com' || host.endsWith('.reddit.com')) {
+            return 'reddit';
+        }
+
+        return null;
+    } catch {
+        return null;
+    }
+}
+
+function getLimitedProviderLabel(provider: LimitedProvider): string {
+    if (!provider) return 'This provider has limited public previews';
+    if (provider === 'x') return 'X limits unauthenticated metadata previews';
+    if (provider === 'twitter') {
+        return 'Twitter limits unauthenticated metadata previews';
+    }
+
+    return `${provider.charAt(0).toUpperCase()}${provider.slice(1)} limits unauthenticated metadata previews`;
+}
+
 const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
     const [isEditing, setIsEditing] = useState(false);
     const [linkUrl, setLinkUrl] = useState(tile.data?.linkUrl || '');
@@ -29,6 +73,7 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
     const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
     const urlInputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const [isLimitedMetadata, setIsLimitedMetadata] = useState(false);
 
     useEffect(() => {
         if (isEditing && urlInputRef.current) {
@@ -45,6 +90,7 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
         setThumbnailUrl(tile.data?.thumbnailUrl || '');
         setAuthor(tile.data?.author || '');
         setPublishDate(tile.data?.publishDate || '');
+        setIsLimitedMetadata(false);
     }, [
         isEditing,
         tile.data?.linkUrl,
@@ -114,13 +160,42 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
             toast.loading('Fetching link metadata...');
             try {
                 const metadata = await metadataAPI.fetchMetadata(linkUrl);
-                setLinkTitle(metadata.title || '');
-                setLinkDescription(metadata.description || '');
-                setThumbnailUrl(metadata.image || '');
-                setAuthor(metadata.author || '');
-                setPublishDate(metadata.date || '');
+                const nextTitle = metadata.title || '';
+                const nextDescription = metadata.description || '';
+                const nextImage = metadata.image || '';
+                const nextAuthor = metadata.author || '';
+                const nextDate = metadata.date || '';
+
+                setLinkTitle(nextTitle);
+                setLinkDescription(nextDescription);
+                setThumbnailUrl(nextImage);
+                setAuthor(nextAuthor);
+                setPublishDate(nextDate);
+
+                const hasPreviewData =
+                    metadata.hasPreviewData ??
+                    Boolean(
+                        nextTitle ||
+                        nextDescription ||
+                        nextImage ||
+                        nextAuthor ||
+                        nextDate
+                    );
+                const providerIsLimited =
+                    metadata.isLimited ??
+                    Boolean(getLimitedProviderFromUrl(linkUrl));
+                setIsLimitedMetadata(providerIsLimited && !hasPreviewData);
+
                 toast.dismiss();
-                toast.success('Metadata loaded');
+                if (hasPreviewData) {
+                    toast.success('Metadata loaded');
+                } else if (providerIsLimited) {
+                    toast.info('Limited preview: provider restricts metadata');
+                } else {
+                    toast.warning(
+                        'No preview metadata available for this link'
+                    );
+                }
             } catch (error) {
                 console.error('Failed to fetch metadata:', error);
                 toast.dismiss();
@@ -140,6 +215,18 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
             setIsEditing(true);
         }
     };
+
+    const limitedProvider = getLimitedProviderFromUrl(linkUrl);
+    const showLimitedFallback =
+        !isEditing &&
+        !!linkUrl &&
+        (isLimitedMetadata ||
+            (limitedProvider &&
+                !thumbnailUrl &&
+                !linkTitle &&
+                !linkDescription &&
+                !author &&
+                !publishDate));
 
     return (
         <Card
@@ -189,7 +276,16 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                             overflowWrap: 'break-word',
                         }}
                     >
-                        {thumbnailUrl && !thumbnailFailed ? (
+                        {showLimitedFallback ? (
+                            <div className="rounded-base border-2 border-border bg-black/5 p-3 space-y-1">
+                                <div className="text-xs uppercase tracking-wide font-semibold text-black/80">
+                                    Limited Preview
+                                </div>
+                                <p className="text-sm text-black">
+                                    {getLimitedProviderLabel(limitedProvider)}
+                                </p>
+                            </div>
+                        ) : thumbnailUrl && !thumbnailFailed ? (
                             <div className="flex justify-center">
                                 <img
                                     src={thumbnailUrl}
