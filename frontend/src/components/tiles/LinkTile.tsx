@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Tile } from '@/types';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -105,7 +105,7 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
         setThumbnailFailed(false);
     }, [thumbnailUrl]);
 
-    const handleSave = () => {
+    const handleSave = useCallback(() => {
         setIsEditing(false);
         if (onUpdate) {
             onUpdate({
@@ -120,7 +120,16 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
                 },
             });
         }
-    };
+    }, [
+        author,
+        linkDescription,
+        linkTitle,
+        linkUrl,
+        onUpdate,
+        publishDate,
+        thumbnailUrl,
+        tile.data,
+    ]);
 
     useEffect(() => {
         if (!isEditing) return;
@@ -138,17 +147,7 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [
-        isEditing,
-        linkUrl,
-        linkTitle,
-        linkDescription,
-        thumbnailUrl,
-        author,
-        publishDate,
-        onUpdate,
-        tile.data,
-    ]);
+    }, [isEditing, handleSave]);
 
     // Auto-fetch metadata when URL changes
     useEffect(() => {
@@ -207,7 +206,7 @@ const LinkTile = ({ tile, onUpdate }: LinkTileProps) => {
 
         const timer = setTimeout(fetchMetadata, 500);
         return () => clearTimeout(timer);
-    }, [linkUrl]);
+    }, [linkTitle, linkUrl]);
 
     const handleClick = (e: React.MouseEvent) => {
         e.stopPropagation();

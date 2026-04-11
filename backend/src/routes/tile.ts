@@ -55,16 +55,63 @@ router.get(
                 },
             ]);
 
-            // Flat threshold — return all tiles scoring >= 0.74, ranked by score.
-            const results = raw.filter(
-                (r: { _id: unknown; score: number }) => r.score >= 0.74
+            const ranked = raw
+                .filter(
+                    (r: { _id: unknown; score: number }) =>
+                        typeof r.score === 'number' && Number.isFinite(r.score)
+                )
+                .sort(
+                    (a: { score: number }, b: { score: number }) =>
+                        b.score - a.score
+                );
+
+            const topScore = ranked[0]?.score ?? 0;
+            const adaptiveThreshold = Math.max(0.55, topScore * 0.82);
+
+            let results = ranked.filter(
+                (r: { _id: unknown; score: number }) =>
+                    r.score >= adaptiveThreshold
             );
 
-            console.log(
-                `Semantic search — kept: ${results.length}/${raw.length}`,
-                results.map((r: { _id: unknown; score: number }) =>
-                    r.score.toFixed(4)
+            // Never return empty solely due to thresholding; keep top candidates.
+            if (results.length === 0 && ranked.length > 0) {
+                results = ranked.slice(0, 5);
+            }
+
+            // Fallback when vectors are missing/sparse: basic text match over tile fields.
+            if (results.length === 0) {
+                const escaped = q
+                    .trim()
+                    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(escaped, 'i');
+
+                const textMatches = await Tile.find(
+                    {
+                        boardId,
+                        $or: [
+                            { 'data.header': regex },
+                            { 'data.text': regex },
+                            { 'data.caption': regex },
+                            { 'data.linkTitle': regex },
+                            { 'data.linkDescription': regex },
+                            { 'data.author': regex },
+                            { 'data.linkUrl': regex },
+                        ],
+                    },
+                    { _id: 1 }
                 )
+                    .limit(20)
+                    .lean();
+
+                results = textMatches.map((t, idx) => ({
+                    _id: t._id,
+                    // Deterministic descending pseudo-score for UI ordering.
+                    score: 0.5 - idx * 0.001,
+                }));
+            }
+
+            console.log(
+                `Semantic search — returned: ${results.length}, vectorRaw: ${raw.length}, topScore: ${topScore.toFixed(4)}`
             );
             return res.json({ results });
         } catch (error) {

@@ -323,8 +323,7 @@ const Board = () => {
                     !!tile.data?.linkUrl &&
                     tile.data.linkUrl.startsWith('http') &&
                     (!tile.data?.thumbnailUrl ||
-                        !tile.data?.linkTitle ||
-                        !tile.data?.linkDescription)
+                        !tile.data?.linkTitle)
             );
 
             if (linkTilesNeedingMetadata.length === 0) return;
@@ -361,6 +360,22 @@ const Board = () => {
                                 tile.data?.publishDate || metadata.date || '',
                         };
 
+                        const hasChanges =
+                            (tile.data?.linkTitle || '') !==
+                                (nextData.linkTitle || '') ||
+                            (tile.data?.linkDescription || '') !==
+                                (nextData.linkDescription || '') ||
+                            (tile.data?.thumbnailUrl || '') !==
+                                (nextData.thumbnailUrl || '') ||
+                            (tile.data?.author || '') !==
+                                (nextData.author || '') ||
+                            (tile.data?.publishDate || '') !==
+                                (nextData.publishDate || '');
+
+                        if (!hasChanges) {
+                            return null;
+                        }
+
                         await tileAPI.updateTile(id, tile._id, {
                             data: nextData,
                         });
@@ -373,7 +388,7 @@ const Board = () => {
                 );
 
                 batchResults.forEach((result) => {
-                    if (result.status === 'fulfilled') {
+                    if (result.status === 'fulfilled' && result.value) {
                         mergedUpdates.set(
                             result.value.tileId,
                             result.value.data

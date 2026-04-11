@@ -95,7 +95,6 @@ const Canvas = ({
     onTileClick,
     onCanvasClick,
     selectedTileIds = new Set<string>(),
-    searchMatchIds: _searchMatchIds = new Set<string>(),
     focusedSearchId = null,
     targetPan = null,
     semanticRankMap = new Map<string, number>(),
@@ -405,6 +404,7 @@ const Canvas = ({
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
         setIsDragOver(true);
     };
 
@@ -441,22 +441,79 @@ const Canvas = ({
             }
         }
 
-        // Handle URL drops (from browser)
+        // Handle URL drops (from browser tabs): text/uri-list, text/plain and text/html.
+        const uriList = e.dataTransfer.getData('text/uri-list');
         const html = e.dataTransfer.getData('text/html');
         const text = e.dataTransfer.getData('text/plain');
 
-        // Try to extract image URL from HTML
-        if (html) {
-            const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-            if (imgMatch && imgMatch[1]) {
-                onCreateTileFromDrop(imgMatch[1], position);
-                return;
+        const cleanUrl = (value: string): string | null => {
+            const candidate = value.trim();
+            if (!candidate) return null;
+            try {
+                const url = new URL(candidate);
+                return url.href;
+            } catch {
+                return null;
+            }
+        };
+
+        const isLikelyImageUrl = (value: string): boolean => {
+            try {
+                const url = new URL(value);
+                const pathname = url.pathname.toLowerCase();
+                return /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)$/i.test(
+                    pathname
+                );
+            } catch {
+                return false;
+            }
+        };
+
+        const createFromUrl = (value: string, force = false): boolean => {
+            const url = cleanUrl(value);
+            if (!url) return false;
+
+            // Accept direct image URLs and common drag payloads that don't expose an extension.
+            if (
+                force ||
+                isLikelyImageUrl(url) ||
+                /image|img|photo|cdn|cloudinary/i.test(url)
+            ) {
+                onCreateTileFromDrop(url, position);
+                return true;
+            }
+
+            return false;
+        };
+
+        // `text/uri-list` can contain comments and multiple URLs; use the first URL line.
+        if (uriList) {
+            const uriCandidates = uriList
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter((line) => line && !line.startsWith('#'));
+
+            for (const candidate of uriCandidates) {
+                if (createFromUrl(candidate)) return;
             }
         }
 
-        // Check if plain text is an image URL
-        if (text && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(text)) {
-            onCreateTileFromDrop(text, position);
+        // Parse HTML payload and prefer any <img src="..."> URL.
+        if (html) {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const imageCandidates: string[] = [
+                ...Array.from(doc.querySelectorAll('img'))
+                    .map((img) => img.getAttribute('src') || '')
+                    .filter(Boolean),
+            ];
+
+            for (const candidate of imageCandidates) {
+                if (createFromUrl(candidate, true)) return;
+            }
+        }
+
+        // Some browsers provide only text/plain for tab drags.
+        if (text && createFromUrl(text)) {
             return;
         }
     };
