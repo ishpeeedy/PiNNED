@@ -95,6 +95,7 @@ const Canvas = ({
     onTileClick,
     onCanvasClick,
     selectedTileIds = new Set<string>(),
+    searchMatchIds = new Set<string>(),
     focusedSearchId = null,
     targetPan = null,
     semanticRankMap = new Map<string, number>(),
@@ -646,21 +647,28 @@ const Canvas = ({
                                                                           tile._id
                                                                       );
                                                                   if (
-                                                                      score ===
+                                                                      score !==
                                                                       undefined
+                                                                  ) {
+                                                                      if (
+                                                                          score >=
+                                                                          0.85
+                                                                      )
+                                                                          return 'search-glow-border-high';
+                                                                      if (
+                                                                          score >=
+                                                                          0.78
+                                                                      )
+                                                                          return 'search-glow-border-mid';
+                                                                      return 'search-glow-border-low';
+                                                                  }
+                                                                  // Plain text search has no relevance
+                                                                  // score — every match ranks equally.
+                                                                  return searchMatchIds.has(
+                                                                      tile._id
                                                                   )
-                                                                      return '';
-                                                                  if (
-                                                                      score >=
-                                                                      0.85
-                                                                  )
-                                                                      return 'search-glow-border-high';
-                                                                  if (
-                                                                      score >=
-                                                                      0.78
-                                                                  )
-                                                                      return 'search-glow-border-mid';
-                                                                  return 'search-glow-border-low';
+                                                                      ? 'search-glow-border-mid'
+                                                                      : '';
                                                               })()
                                                 }`}
                                                 onContextMenu={(e) => {

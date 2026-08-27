@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { boardAPI, metadataAPI, tileAPI } from '@/services/api';
+import { boardAPI, metadataAPI, tileAPI, uploadAPI } from '@/services/api';
 import type { Board as BoardType, Tile } from '@/types';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
@@ -773,26 +773,13 @@ const Board = () => {
 
         try {
             let imageUrl = '';
+            let cloudinaryPublicId: string | undefined;
 
             // Handle file upload
             if (data instanceof File) {
-                const formData = new FormData();
-                formData.append('image', data);
-
-                const response = await fetch(
-                    `http://localhost:5000/api/upload/image`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem('token')}`,
-                        },
-                        body: formData,
-                    }
-                );
-
-                if (!response.ok) throw new Error('Upload failed');
-                const result = await response.json();
-                imageUrl = result.url;
+                const uploaded = await uploadAPI.uploadImage(data);
+                imageUrl = uploaded.url;
+                cloudinaryPublicId = uploaded.publicId;
             } else {
                 // Handle URL
                 imageUrl = data;
@@ -810,6 +797,7 @@ const Board = () => {
                 },
                 data: {
                     imageUrl,
+                    ...(cloudinaryPublicId ? { cloudinaryPublicId } : {}),
                 },
             });
 

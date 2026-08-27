@@ -150,3 +150,19 @@ export const metadataAPI = {
         return response.data;
     },
 };
+
+export const uploadAPI = {
+    // Returns both the URL and the Cloudinary public ID. The public ID must be
+    // stored on the tile, otherwise the asset can never be cleaned up on delete.
+    uploadImage: async (file: File) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await api.post<{ url: string; publicId: string }>(
+            '/api/upload/image',
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        return response.data;
+    },
+};
