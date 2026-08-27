@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.ts';
 import { authenticateToken, AuthRequest } from '../middleware/auth.ts';
+import { authLimiter } from '../middleware/rateLimit.ts';
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ function getJwtSecret() {
     return jwtSecret;
 }
 
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register', authLimiter, async (req: Request, res: Response) => {
     try {
         const { email, password, name } = req.body;
         const existingUser = await User.findOne({ email });
@@ -44,7 +45,7 @@ router.post('/register', async (req: Request, res: Response) => {
     }
 });
 
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', authLimiter, async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });

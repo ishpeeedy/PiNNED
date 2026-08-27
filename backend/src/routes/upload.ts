@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import multer from 'multer';
 import cloudinary from '../config/cloudinary';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { uploadLimiter } from '../middleware/rateLimit.ts';
 
 const router = Router();
 
@@ -26,6 +27,7 @@ const upload = multer({
 router.post(
     '/image',
     authenticateToken,
+    uploadLimiter,
     upload.single('image'),
     async (req: AuthRequest, res: Response) => {
         try {

@@ -12,10 +12,12 @@ import { authenticateToken } from '../middleware/auth';
 import MetadataCache from '../models/metadataCache.ts';
 import { cacheLinkThumbnail } from '../services/thumbnailCache.ts';
 import { BlockedUrlError, safeFetch } from '../services/safeFetch.ts';
+import { metadataLimiter } from '../middleware/rateLimit.ts';
 
 const router = express.Router();
 
 router.use(authenticateToken);
+router.use(metadataLimiter);
 
 // Initialize metascraper with plugins
 const scraper = metascraper([

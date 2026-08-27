@@ -15,6 +15,12 @@ import healthRoutes from './routes/health.ts';
 export function createApp() {
     const app = express();
 
+    // Render terminates TLS at a proxy, so req.ip would otherwise be the
+    // proxy's address for every caller and the rate limiters would key all
+    // traffic to a single bucket. One hop only — trusting the whole chain
+    // would let clients spoof X-Forwarded-For.
+    app.set('trust proxy', 1);
+
     app.use(
         cors({
             origin: process.env.CLIENT_URL || 'http://localhost:5173',
