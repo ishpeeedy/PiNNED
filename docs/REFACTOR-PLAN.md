@@ -52,6 +52,21 @@ Verification is therefore split:
 Pre-existing lint errors are **not** in scope — they are mostly `no-explicit-any`
 in `NotFound.tsx` and auth pages. The rule is: do not increase these counts.
 
+### Where things stand
+
+| | Before | Now |
+|---|--------|-----|
+| Tests | 0 | **152** (44 frontend, 108 backend) |
+| Frontend typecheck | clean | clean |
+| Backend typecheck | clean | clean |
+| Frontend lint | 18 errors, 6 warnings | 18 errors, 6 warnings (unchanged) |
+| `Board` chunk | 32.82 kB gzip | 32.83 kB gzip |
+| `npm start` (backend) | could not work | boots and serves |
+
+Stages 1, 2, 4.1 and most of 7 are done. Stages 3, 5 and 6 are the frontend
+canvas work and are deliberately **not** started — they need a browser to
+verify, which this environment does not have.
+
 ---
 
 ## Stage 1 — Critical bug fixes
@@ -113,7 +128,7 @@ The step that needs your eyes. Left until state is clean and tested.
 
 - [x] **7.1** `loadBoard` middleware replacing ~8 copy-pasted ownership checks
 - [x] **7.2** Zod validation on request bodies
-- [ ] **7.3** Central error handler + `asyncHandler`
+- [ ] **7.3** (deferred — routes are consistent enough that this is now cosmetic) Central error handler + `asyncHandler`
 - [x] **7.4** Rate limiting (upload, auth, metadata)
 - [x] **7.5** SSRF guard on `/api/metadata`
 - [ ] **7.6** Drop redundant `board.save()` on every tile write
@@ -146,6 +161,21 @@ against the deployed site after Stage 1 lands.
 5. **Search glow.** Type a query matching several tiles. All matches should glow,
    not only the focused one.
 
-### Later stages
+### Backend work
 
-Added as those stages land.
+6. **Deploy check.** The backend `start` script changed from `node dist/server.js`
+   (which never worked — nothing was ever compiled into `dist/`) to running tsx
+   directly. If Render's start command is set to something custom in its
+   dashboard, confirm it still matches. `tsx` also moved from devDependencies to
+   dependencies, because a production install skips devDependencies.
+7. **Metadata still scrapes.** Paste a normal link (a news article, a YouTube
+   video). The scraper now refuses private addresses and follows redirects
+   manually, so this is the path to sanity-check.
+8. **Login still works.** The auth routes are rate limited at 20 *failed*
+   attempts per IP per 15 minutes. Successful logins are not counted.
+
+### Not yet verifiable here
+
+Stages 3, 5 and 6 change the canvas and need a browser. When you next sit down
+with the app running, that is the work to pick up — the modules they build on
+(`viewport.ts`, `history.ts`, `ids.ts`) are already in place and tested.
