@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import type { AnyBulkWriteOperation } from 'mongoose';
 import Tile from '../models/tile.ts';
+import type { ITile } from '../models/tile.ts';
 import Board from '../models/board.ts';
 import { authenticateToken } from '../middleware/auth';
 import cloudinary from '../config/cloudinary';
@@ -9,18 +11,28 @@ import {
     generateAndSaveEmbedding,
     debouncedGenerateAndSaveEmbedding,
 } from '../services/embedding.ts';
+import {
+    collectPublicIds,
+    destroyPublicIds,
+} from '../services/cloudinaryCleanup.ts';
+import { tileBatchSchema, tilePatchSchema } from '../validation/tile.ts';
 
 const router = express.Router();
 
-// Fields a client may write on a tile. Everything else — boardId, embedding,
-// timestamps — is server-owned.
-const TILE_WRITABLE_FIELDS = [
-    'position',
-    'size',
-    'style',
-    'data',
-    'zIndex',
-] as const;
+// Changing any of these means the tile's embedding is stale.
+const EMBEDDABLE_TEXT_FIELDS = [
+    'header',
+    'text',
+    'caption',
+    'linkTitle',
+    'linkDescription',
+    'author',
+];
+
+function hasEmbeddableText(data: unknown): boolean {
+    if (!data || typeof data !== 'object') return false;
+    return EMBEDDABLE_TEXT_FIELDS.some((field) => field in data);
+}
 
 router.use(authenticateToken);
 
@@ -90,9 +102,7 @@ router.get(
 
             // Fallback when vectors are missing/sparse: basic text match over tile fields.
             if (results.length === 0) {
-                const escaped = q
-                    .trim()
-                    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const escaped = q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const regex = new RegExp(escaped, 'i');
 
                 const textMatches = await Tile.find(
@@ -130,6 +140,106 @@ router.get(
         }
     }
 );
+
+// PATCH /api/boards/:boardId/tiles - Apply a batch of tile operations
+//
+// One gesture produces one request. Moving a 40-tile selection was 40 PATCHes;
+// undoing a delete on a 30-tile board was ~60 sequential calls. Both are now a
+// single round-trip and a single bulkWrite.
+router.patch('/boards/:boardId/tiles', async (req: Request, res: Response) => {
+    try {
+        const { boardId } = req.params;
+
+        const parsed = tileBatchSchema.safeParse(req.body);
+        if (!parsed.success) {
+            return res.status(400).json({
+                message: 'Invalid batch',
+                issues: parsed.error.issues.map((issue) => ({
+                    path: issue.path.join('.'),
+                    message: issue.message,
+                })),
+            });
+        }
+        const { upserts, patches, deletes } = parsed.data;
+
+        const board = await Board.findById(boardId);
+        if (!board) {
+            return res.status(404).json({ message: 'Board not found' });
+        }
+        if (board.userId.toString() !== req.user?.userId) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        // Gather the assets to clean up before the tiles disappear.
+        const orphanedPublicIds = deletes.length
+            ? await collectPublicIds({ boardId, tileIds: deletes })
+            : [];
+
+        // Every filter is scoped by boardId, so a caller cannot reach a tile on
+        // a board they do not own even by guessing its id.
+        //
+        // The payloads are cast because the model types `style` and `data` as
+        // fully populated while a batch legitimately sets a subset of fields.
+        // zod has already validated the shape by this point.
+        const operations: AnyBulkWriteOperation<ITile>[] = [
+            ...upserts.map(({ _id, ...fields }) => ({
+                updateOne: {
+                    filter: { _id, boardId },
+                    update: {
+                        $set: fields as unknown as Partial<ITile>,
+                        $setOnInsert: { boardId },
+                    },
+                    upsert: true,
+                },
+            })),
+            ...patches.map(({ id, changes }) => ({
+                updateOne: {
+                    filter: { _id: id, boardId },
+                    update: { $set: changes as unknown as Partial<ITile> },
+                },
+            })),
+            ...deletes.map((id) => ({
+                deleteOne: { filter: { _id: id, boardId } },
+            })),
+        ] as AnyBulkWriteOperation<ITile>[];
+
+        // Ordered, because a batch may delete and recreate the same id.
+        const result = await Tile.bulkWrite(operations, { ordered: true });
+
+        await destroyPublicIds(orphanedPublicIds);
+
+        // Recompute rather than $inc — upserts may or may not have inserted,
+        // and a drifting counter is what made the dashboard counts wrong.
+        board.tileCount = await Tile.countDocuments({ boardId });
+        await board.save();
+
+        // Re-embed anything whose text changed. Debounced per tile, so a burst
+        // of edits costs one embedding call rather than one per request.
+        const touchedIds = [
+            ...upserts
+                .filter((tile) => hasEmbeddableText(tile.data))
+                .map((tile) => tile._id),
+            ...patches
+                .filter((patch) => hasEmbeddableText(patch.changes.data))
+                .map((patch) => patch.id),
+        ];
+        if (touchedIds.length) {
+            const touched = await Tile.find({ _id: { $in: touchedIds } });
+            for (const tile of touched) {
+                debouncedGenerateAndSaveEmbedding(tile);
+            }
+        }
+
+        return res.json({
+            upserted: result.upsertedCount + result.modifiedCount,
+            deleted: result.deletedCount,
+            tileCount: board.tileCount,
+        });
+    } catch (error) {
+        console.error('Failed to apply tile batch:', error);
+        return res.status(500).json({ message: 'Failed to apply tile batch' });
+    }
+});
 
 // GET /api/boards/:boardId/tiles - Get all tiles for a board
 router.get('/boards/:boardId/tiles', async (req: Request, res: Response) => {
@@ -229,33 +339,30 @@ router.patch(
                 return res.status(403).json({ message: 'Access denied' });
             }
 
-            // Only these fields are client-writable. Spreading req.body would
-            // let a caller set boardId, embedding, timestamps or anything else.
-            const updates: Record<string, unknown> = {};
-            for (const field of TILE_WRITABLE_FIELDS) {
-                if (field in req.body) updates[field] = req.body[field];
+            // Parsing rather than spreading req.body: only declared fields
+            // reach the database, so a caller cannot set boardId, embedding or
+            // timestamps.
+            const parsed = tilePatchSchema.safeParse(req.body);
+            if (!parsed.success) {
+                return res.status(400).json({
+                    message: 'Invalid tile update',
+                    issues: parsed.error.issues.map((issue) => ({
+                        path: issue.path.join('.'),
+                        message: issue.message,
+                    })),
+                });
             }
+            const updates = parsed.data;
 
             const updatedTile = await Tile.findByIdAndUpdate(
                 id,
-                { $set: updates },
+                { $set: updates as unknown as Partial<ITile> },
                 { new: true, runValidators: false }
             );
 
             // Re-embed if any text field changed (debounced — waits 5s of
             // inactivity so rapid edits don't burn the daily quota)
-            const textFields = [
-                'header',
-                'text',
-                'caption',
-                'linkTitle',
-                'linkDescription',
-                'author',
-            ];
-            const updatedData = updates.data as
-                | Record<string, unknown>
-                | undefined;
-            if (updatedData && textFields.some((f) => f in updatedData)) {
+            if (hasEmbeddableText(updates.data)) {
                 debouncedGenerateAndSaveEmbedding(updatedTile!);
             }
 

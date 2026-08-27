@@ -86,7 +86,7 @@ New files only; nothing imports them yet, so risk is zero.
 
 ## Stage 4 — Persistence and history
 
-- [ ] **4.1** Backend batch endpoint (upsert + delete, one `bulkWrite`, size cap)
+- [x] **4.1** Backend batch endpoint (upsert + delete, one `bulkWrite`, size cap)
 - [ ] **4.2** Client-generated IDs wired through creation
 - [ ] **4.3** Commit-on-gesture-end, in-flight map, `pagehide` flush
 - [ ] **4.4** Command history replaces snapshots; delete `syncTilesToBackend`
@@ -112,7 +112,7 @@ The step that needs your eyes. Left until state is clean and tested.
 ## Stage 7 — Backend hygiene
 
 - [ ] **7.1** `loadBoard` middleware replacing ~8 copy-pasted ownership checks
-- [ ] **7.2** Zod validation on request bodies
+- [~] **7.2** Zod validation on request bodies
 - [ ] **7.3** Central error handler + `asyncHandler`
 - [ ] **7.4** Rate limiting (upload, auth, metadata)
 - [ ] **7.5** SSRF guard on `/api/metadata`
