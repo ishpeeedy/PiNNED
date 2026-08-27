@@ -12,6 +12,16 @@ import {
 
 const router = express.Router();
 
+// Fields a client may write on a tile. Everything else — boardId, embedding,
+// timestamps — is server-owned.
+const TILE_WRITABLE_FIELDS = [
+    'position',
+    'size',
+    'style',
+    'data',
+    'zIndex',
+] as const;
+
 router.use(authenticateToken);
 
 // GET /api/boards/:boardId/tiles/search - Semantic search tiles
@@ -209,7 +219,6 @@ router.patch(
     async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const updates = req.body;
 
             const tile = await Tile.findById(id);
             if (!tile) {
@@ -219,7 +228,13 @@ router.patch(
             if (!board || board.userId.toString() !== req.user?.userId) {
                 return res.status(403).json({ message: 'Access denied' });
             }
-            delete updates.boardId;
+
+            // Only these fields are client-writable. Spreading req.body would
+            // let a caller set boardId, embedding, timestamps or anything else.
+            const updates: Record<string, unknown> = {};
+            for (const field of TILE_WRITABLE_FIELDS) {
+                if (field in req.body) updates[field] = req.body[field];
+            }
 
             const updatedTile = await Tile.findByIdAndUpdate(
                 id,
@@ -237,7 +252,10 @@ router.patch(
                 'linkDescription',
                 'author',
             ];
-            if (updates.data && textFields.some((f) => f in updates.data)) {
+            const updatedData = updates.data as
+                | Record<string, unknown>
+                | undefined;
+            if (updatedData && textFields.some((f) => f in updatedData)) {
                 debouncedGenerateAndSaveEmbedding(updatedTile!);
             }
 

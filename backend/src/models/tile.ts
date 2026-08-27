@@ -37,7 +37,12 @@ export interface ITile extends Document {
 
 const TileSchema = new Schema(
     {
-        boardId: { type: Schema.Types.ObjectId, ref: 'Board', required: true },
+        boardId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Board',
+            required: true,
+            index: true,
+        },
         type: { type: String, enum: ['text', 'image', 'link'], required: true },
         position: {
             x: { type: Number, required: true, default: 0 },

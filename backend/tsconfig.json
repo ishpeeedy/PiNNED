@@ -9,9 +9,9 @@
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
         "allowImportingTsExtensions": true,
+        // This project is never compiled — it runs through tsx, which strips
+        // types at load. tsc exists purely as a typechecker.
         "noEmit": true,
-        "outDir": "./dist",
-        "rootDir": "./src",
         "typeRoots": ["./node_modules/@types", "./src/types"]
     },
     "include": ["src/**/*"],

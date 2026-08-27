@@ -2,12 +2,12 @@
     "name": "pinned-backend",
     "version": "1.0.0",
     "description": "Backend API for PiNNED",
-    "main": "dist/server.js",
+    "main": "src/server.ts",
     "type": "module",
     "scripts": {
         "dev": "node --env-file=.env --import tsx src/server.ts",
-        "build": "tsc",
-        "start": "node dist/server.js"
+        "typecheck": "tsc --noEmit",
+        "start": "node --import tsx src/server.ts"
     },
     "dependencies": {
         "@google/generative-ai": "^0.24.1",
@@ -28,7 +28,8 @@
         "mongodb": "^7.0.0",
         "mongoose": "^8.0.3",
         "multer": "^2.0.2",
-        "prettier": "^3.8.1"
+        "prettier": "^3.8.1",
+        "tsx": "^4.7.0"
     },
     "devDependencies": {
         "@types/bcryptjs": "^2.4.6",
@@ -37,7 +38,6 @@
         "@types/jsonwebtoken": "^9.0.5",
         "@types/multer": "^2.0.0",
         "@types/node": "^20.10.6",
-        "tsx": "^4.7.0",
         "typescript": "^5.3.3"
     }
 }

@@ -1,8 +1,35 @@
 import express, { Response } from 'express';
 import Board from '../models/board.ts';
+import Tile from '../models/tile.ts';
+import cloudinary from '../config/cloudinary.ts';
 import { authenticateToken, AuthRequest } from '../middleware/auth.ts';
 
 const router = express.Router();
+
+// Cloudinary's bulk delete accepts at most 100 public IDs per call.
+const CLOUDINARY_DELETE_BATCH = 100;
+
+// Best-effort removal of a board's uploaded images. Failures are logged but
+// never block the delete — an undeletable board is worse than a stray asset.
+async function destroyBoardAssets(boardId: string): Promise<void> {
+    const imageTiles = await Tile.find(
+        { boardId, 'data.cloudinaryPublicId': { $exists: true, $ne: '' } },
+        { 'data.cloudinaryPublicId': 1 }
+    ).lean();
+
+    const publicIds = imageTiles
+        .map((tile) => tile.data?.cloudinaryPublicId)
+        .filter((publicId): publicId is string => Boolean(publicId));
+
+    for (let i = 0; i < publicIds.length; i += CLOUDINARY_DELETE_BATCH) {
+        const batch = publicIds.slice(i, i + CLOUDINARY_DELETE_BATCH);
+        try {
+            await cloudinary.api.delete_resources(batch);
+        } catch (error) {
+            console.error('Failed to delete Cloudinary assets:', error);
+        }
+    }
+}
 
 // GET / (all boards)
 // GET /:id (single board)
@@ -105,6 +132,10 @@ router.delete(
                 return;
             }
 
+            // Cascade: a board's tiles are meaningless without it, and their
+            // Cloudinary uploads would otherwise be billed forever.
+            await destroyBoardAssets(req.params.id);
+            await Tile.deleteMany({ boardId: req.params.id });
             await Board.findByIdAndDelete(req.params.id);
 
             res.json({ message: 'Board deleted successfully' });

@@ -25,7 +25,12 @@ export interface IBoard extends Document {
 
 const boardSchema = new Schema<IBoard>(
     {
-        userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        userId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+            index: true,
+        },
         title: { type: String, required: true },
         description: { type: String },
         icon: { type: String, default: '📌' },
