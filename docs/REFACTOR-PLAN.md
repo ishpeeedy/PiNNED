@@ -111,11 +111,11 @@ The step that needs your eyes. Left until state is clean and tested.
 
 ## Stage 7 — Backend hygiene
 
-- [ ] **7.1** `loadBoard` middleware replacing ~8 copy-pasted ownership checks
-- [~] **7.2** Zod validation on request bodies
+- [x] **7.1** `loadBoard` middleware replacing ~8 copy-pasted ownership checks
+- [x] **7.2** Zod validation on request bodies
 - [ ] **7.3** Central error handler + `asyncHandler`
 - [ ] **7.4** Rate limiting (upload, auth, metadata)
-- [ ] **7.5** SSRF guard on `/api/metadata`
+- [x] **7.5** SSRF guard on `/api/metadata`
 - [ ] **7.6** Drop redundant `board.save()` on every tile write
 - [ ] **7.7** Fix `tileCount` drift
 

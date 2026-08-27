@@ -11,6 +11,7 @@ import metascraperUrl from 'metascraper-url';
 import { authenticateToken } from '../middleware/auth';
 import MetadataCache from '../models/metadataCache.ts';
 import { cacheLinkThumbnail } from '../services/thumbnailCache.ts';
+import { BlockedUrlError, safeFetch } from '../services/safeFetch.ts';
 
 const router = express.Router();
 
@@ -394,14 +395,11 @@ router.get('/', async (req: Request, res: Response) => {
             return res.json(responsePayload);
         }
 
-        // Fetch the HTML with browser-like headers to reduce bot-block responses.
-        const controller = new AbortController();
-        const timeoutId = setTimeout(
-            () => controller.abort(),
-            REQUEST_TIMEOUT_MS
-        );
-        const response = await fetch(parsedUrl.toString(), {
-            signal: controller.signal,
+        // Fetch the HTML with browser-like headers to reduce bot-block
+        // responses. safeFetch refuses private addresses and revalidates every
+        // redirect hop, so a public URL cannot bounce us into the network.
+        const response = await safeFetch(parsedUrl.toString(), {
+            timeoutMs: REQUEST_TIMEOUT_MS,
             headers: {
                 'User-Agent':
                     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -410,9 +408,7 @@ router.get('/', async (req: Request, res: Response) => {
                 'Cache-Control': 'no-cache',
                 Pragma: 'no-cache',
             },
-            redirect: 'follow',
         });
-        clearTimeout(timeoutId);
 
         if (!response.ok) {
             return res.status(502).json({
@@ -463,6 +459,14 @@ router.get('/', async (req: Request, res: Response) => {
         return res.json(responsePayload);
     } catch (error) {
         console.error('Metadata fetch error:', error);
+
+        // A blocked URL is the caller's fault, not a server failure, and the
+        // message must not reveal what the address resolved to.
+        if (error instanceof BlockedUrlError) {
+            return res.status(400).json({
+                message: 'That URL cannot be fetched',
+            });
+        }
 
         if (error instanceof Error && error.name === 'AbortError') {
             return res.status(504).json({
