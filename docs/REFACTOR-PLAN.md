@@ -59,24 +59,24 @@ in `NotFound.tsx` and auth pages. The rule is: do not increase these counts.
 Independent of the refactor. Safe, small, individually revertible. These are
 worth shipping on their own.
 
-- [ ] **1.1** Functional `setState` everywhere — fixes ghost tiles
-- [ ] **1.2** Hardcoded `localhost:5000` in drag-drop upload
-- [ ] **1.3** Store `cloudinaryPublicId` on dropped images
-- [ ] **1.4** `searchMatchIds` never destructured — text matches don't glow
-- [ ] **1.5** Cascade-delete tiles + Cloudinary assets when a board is deleted
-- [ ] **1.6** Add indexes on `Tile.boardId` and `Board.userId`
-- [ ] **1.7** Whitelist fields on tile PATCH (mass assignment)
-- [ ] **1.8** Backend build config honesty (`tsx`)
+- [x] **1.1** Functional `setState` everywhere — fixes ghost tiles
+- [x] **1.2** Hardcoded `localhost:5000` in drag-drop upload
+- [x] **1.3** Store `cloudinaryPublicId` on dropped images
+- [x] **1.4** `searchMatchIds` never destructured — text matches don't glow
+- [x] **1.5** Cascade-delete tiles + Cloudinary assets when a board is deleted
+- [x] **1.6** Add indexes on `Tile.boardId` and `Board.userId`
+- [x] **1.7** Whitelist fields on tile PATCH (mass assignment)
+- [x] **1.8** Backend build config honesty (`tsx`)
 
 ## Stage 2 — Pure modules and tests
 
 New files only; nothing imports them yet, so risk is zero.
 
-- [ ] **2.1** Add vitest
-- [ ] **2.2** `src/lib/viewport.ts` — `screenToWorld`, `worldToScreen`, `zoomAt`
-- [ ] **2.3** `src/lib/history.ts` — command reducer and inverses
-- [ ] **2.4** `src/lib/ids.ts` — ObjectId-compatible ID generation
-- [ ] **2.5** Unit tests for all of the above
+- [x] **2.1** Add vitest
+- [x] **2.2** `src/lib/viewport.ts` — `screenToWorld`, `worldToScreen`, `zoomAt`
+- [x] **2.3** `src/lib/history.ts` — command reducer and inverses
+- [x] **2.4** `src/lib/ids.ts` — ObjectId-compatible ID generation
+- [x] **2.5** Unit tests for all of the above
 
 ## Stage 3 — State layer
 
