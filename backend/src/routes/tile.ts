@@ -5,7 +5,6 @@ import Tile from '../models/tile.ts';
 import type { ITile } from '../models/tile.ts';
 import Board from '../models/board.ts';
 import { authenticateToken } from '../middleware/auth';
-import cloudinary from '../config/cloudinary';
 import { getEmbedding } from '../config/gemini.ts';
 import {
     generateAndSaveEmbedding,
@@ -392,9 +391,10 @@ router.delete(
             if (!board || board.userId.toString() !== req.user?.userId) {
                 return res.status(403).json({ message: 'Access denied' });
             }
-            // Delete associated Cloudinary image if present
+            // Delete the associated Cloudinary image if present. Best-effort:
+            // a Cloudinary outage must not leave an undeletable tile behind.
             if (tile.type === 'image' && tile.data?.cloudinaryPublicId) {
-                await cloudinary.uploader.destroy(tile.data.cloudinaryPublicId);
+                await destroyPublicIds([tile.data.cloudinaryPublicId]);
             }
 
             await Tile.findByIdAndDelete(id);
