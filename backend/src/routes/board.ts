@@ -1,21 +1,23 @@
-import express, { Response } from 'express';
+import express, { Request, Response } from 'express';
 import Board from '../models/board.ts';
 import Tile from '../models/tile.ts';
 import {
     collectPublicIds,
     destroyPublicIds,
 } from '../services/cloudinaryCleanup.ts';
-import { authenticateToken, AuthRequest } from '../middleware/auth.ts';
+import { authenticateToken } from '../middleware/auth.ts';
+import { loadBoard } from '../middleware/board.ts';
 
 const router = express.Router();
 
-// GET / (all boards)
-// GET /:id (single board)
-// POST / (create)
-// PATCH /:id (update)
-// DELETE /:id (delete)
+router.use(authenticateToken);
 
-router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+// Routes below with an :id param have their board loaded and ownership checked
+// by `loadBoard`, which attaches it as req.board.
+const withBoard = loadBoard('id');
+
+// GET / (all boards)
+router.get('/', async (req: Request, res: Response) => {
     try {
         const boards = await Board.find({ userId: req.user?.userId });
         res.json(boards);
@@ -24,28 +26,8 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     }
 });
 
-router.get(
-    '/:id',
-    authenticateToken,
-    async (req: AuthRequest, res: Response) => {
-        try {
-            const board = await Board.findById(req.params.id);
-            if (!board) {
-                res.status(404).json({ message: 'Board not found' });
-                return;
-            }
-            if (board.userId.toString() !== req.user?.userId) {
-                res.status(403).json({ message: 'You are not authorised' });
-                return;
-            }
-            res.json(board);
-        } catch (error) {
-            res.status(500).json({ message: 'Server error' });
-        }
-    }
-);
-
-router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+// POST / (create)
+router.post('/', async (req: Request, res: Response) => {
     try {
         const { title, description, icon, settings } = req.body;
         if (!title) {
@@ -66,62 +48,42 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     }
 });
 
-router.patch(
-    '/:id',
-    authenticateToken,
-    async (req: AuthRequest, res: Response) => {
-        try {
-            const { title, description, icon, settings } = req.body;
-            const board = await Board.findById(req.params.id);
-            if (!board) {
-                res.status(404).json({ message: 'Board not found' });
-                return;
-            }
-            if (board.userId.toString() !== req.user?.userId) {
-                res.status(403).json({ message: 'Not authorised' });
-                return;
-            }
-            if (title !== undefined) board.title = title;
-            if (description !== undefined) board.description = description;
-            if (icon !== undefined) board.icon = icon;
-            if (settings !== undefined) board.settings = settings;
-            await board.save();
-            res.json(board);
-        } catch (error) {
-            res.status(500).json({ message: 'server error' });
-        }
+// GET /:id (single board)
+router.get('/:id', withBoard, (req: Request, res: Response) => {
+    res.json(req.board);
+});
+
+// PATCH /:id (update)
+router.patch('/:id', withBoard, async (req: Request, res: Response) => {
+    try {
+        const board = req.board!;
+        const { title, description, icon, settings } = req.body;
+        if (title !== undefined) board.title = title;
+        if (description !== undefined) board.description = description;
+        if (icon !== undefined) board.icon = icon;
+        if (settings !== undefined) board.settings = settings;
+        await board.save();
+        res.json(board);
+    } catch (error) {
+        res.status(500).json({ message: 'server error' });
     }
-);
+});
 
-router.delete(
-    '/:id',
-    authenticateToken,
-    async (req: AuthRequest, res: Response) => {
-        try {
-            const board = await Board.findById(req.params.id);
+// DELETE /:id (delete)
+router.delete('/:id', withBoard, async (req: Request, res: Response) => {
+    try {
+        const boardId = req.params.id;
 
-            if (!board) {
-                res.status(404).json({ message: 'Board not found' });
-                return;
-            }
+        // Cascade: a board's tiles are meaningless without it, and their
+        // Cloudinary uploads would otherwise be billed forever.
+        await destroyPublicIds(await collectPublicIds({ boardId }));
+        await Tile.deleteMany({ boardId });
+        await Board.findByIdAndDelete(boardId);
 
-            if (board.userId.toString() !== req.user?.userId) {
-                res.status(403).json({ message: 'Not authorised' });
-                return;
-            }
-
-            // Cascade: a board's tiles are meaningless without it, and their
-            // Cloudinary uploads would otherwise be billed forever.
-            await destroyPublicIds(
-                await collectPublicIds({ boardId: req.params.id })
-            );
-            await Tile.deleteMany({ boardId: req.params.id });
-            await Board.findByIdAndDelete(req.params.id);
-
-            res.json({ message: 'Board deleted successfully' });
-        } catch (error) {
-            res.status(500).json({ message: 'Server error' });
-        }
+        res.json({ message: 'Board deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
     }
-);
+});
+
 export default router;

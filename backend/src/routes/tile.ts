@@ -3,8 +3,8 @@ import mongoose from 'mongoose';
 import type { AnyBulkWriteOperation } from 'mongoose';
 import Tile from '../models/tile.ts';
 import type { ITile } from '../models/tile.ts';
-import Board from '../models/board.ts';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken } from '../middleware/auth.ts';
+import { loadBoard } from '../middleware/board.ts';
 import { getEmbedding } from '../config/gemini.ts';
 import {
     generateAndSaveEmbedding,
@@ -38,6 +38,7 @@ router.use(authenticateToken);
 // GET /api/boards/:boardId/tiles/search - Semantic search tiles
 router.get(
     '/boards/:boardId/tiles/search',
+    loadBoard(),
     async (req: Request, res: Response) => {
         try {
             const { boardId } = req.params;
@@ -46,13 +47,6 @@ router.get(
                 return res
                     .status(400)
                     .json({ message: 'Query must be at least 2 characters' });
-            }
-            const board = await Board.findById(boardId);
-            if (!board) {
-                return res.status(404).json({ message: 'Board not found' });
-            }
-            if (board.userId.toString() !== req.user?.userId) {
-                return res.status(403).json({ message: 'Access denied' });
             }
             const queryVector = await getEmbedding(q.trim());
             const raw = await Tile.aggregate([
@@ -145,132 +139,121 @@ router.get(
 // One gesture produces one request. Moving a 40-tile selection was 40 PATCHes;
 // undoing a delete on a 30-tile board was ~60 sequential calls. Both are now a
 // single round-trip and a single bulkWrite.
-router.patch('/boards/:boardId/tiles', async (req: Request, res: Response) => {
-    try {
-        const { boardId } = req.params;
+router.patch(
+    '/boards/:boardId/tiles',
+    loadBoard(),
+    async (req: Request, res: Response) => {
+        try {
+            const { boardId } = req.params;
+            const board = req.board!;
 
-        const parsed = tileBatchSchema.safeParse(req.body);
-        if (!parsed.success) {
-            return res.status(400).json({
-                message: 'Invalid batch',
-                issues: parsed.error.issues.map((issue) => ({
-                    path: issue.path.join('.'),
-                    message: issue.message,
-                })),
-            });
-        }
-        const { upserts, patches, deletes } = parsed.data;
-
-        const board = await Board.findById(boardId);
-        if (!board) {
-            return res.status(404).json({ message: 'Board not found' });
-        }
-        if (board.userId.toString() !== req.user?.userId) {
-            return res.status(403).json({ message: 'Access denied' });
-        }
-
-        // Gather the assets to clean up before the tiles disappear.
-        const orphanedPublicIds = deletes.length
-            ? await collectPublicIds({ boardId, tileIds: deletes })
-            : [];
-
-        // Every filter is scoped by boardId, so a caller cannot reach a tile on
-        // a board they do not own even by guessing its id.
-        //
-        // The payloads are cast because the model types `style` and `data` as
-        // fully populated while a batch legitimately sets a subset of fields.
-        // zod has already validated the shape by this point.
-        const operations: AnyBulkWriteOperation<ITile>[] = [
-            ...upserts.map(({ _id, ...fields }) => ({
-                updateOne: {
-                    filter: { _id, boardId },
-                    update: {
-                        $set: fields as unknown as Partial<ITile>,
-                        $setOnInsert: { boardId },
-                    },
-                    upsert: true,
-                },
-            })),
-            ...patches.map(({ id, changes }) => ({
-                updateOne: {
-                    filter: { _id: id, boardId },
-                    update: { $set: changes as unknown as Partial<ITile> },
-                },
-            })),
-            ...deletes.map((id) => ({
-                deleteOne: { filter: { _id: id, boardId } },
-            })),
-        ] as AnyBulkWriteOperation<ITile>[];
-
-        // Ordered, because a batch may delete and recreate the same id.
-        const result = await Tile.bulkWrite(operations, { ordered: true });
-
-        await destroyPublicIds(orphanedPublicIds);
-
-        // Recompute rather than $inc — upserts may or may not have inserted,
-        // and a drifting counter is what made the dashboard counts wrong.
-        board.tileCount = await Tile.countDocuments({ boardId });
-        await board.save();
-
-        // Re-embed anything whose text changed. Debounced per tile, so a burst
-        // of edits costs one embedding call rather than one per request.
-        const touchedIds = [
-            ...upserts
-                .filter((tile) => hasEmbeddableText(tile.data))
-                .map((tile) => tile._id),
-            ...patches
-                .filter((patch) => hasEmbeddableText(patch.changes.data))
-                .map((patch) => patch.id),
-        ];
-        if (touchedIds.length) {
-            const touched = await Tile.find({ _id: { $in: touchedIds } });
-            for (const tile of touched) {
-                debouncedGenerateAndSaveEmbedding(tile);
+            const parsed = tileBatchSchema.safeParse(req.body);
+            if (!parsed.success) {
+                return res.status(400).json({
+                    message: 'Invalid batch',
+                    issues: parsed.error.issues.map((issue) => ({
+                        path: issue.path.join('.'),
+                        message: issue.message,
+                    })),
+                });
             }
-        }
+            const { upserts, patches, deletes } = parsed.data;
 
-        return res.json({
-            upserted: result.upsertedCount + result.modifiedCount,
-            deleted: result.deletedCount,
-            tileCount: board.tileCount,
-        });
-    } catch (error) {
-        console.error('Failed to apply tile batch:', error);
-        return res.status(500).json({ message: 'Failed to apply tile batch' });
+            // Gather the assets to clean up before the tiles disappear.
+            const orphanedPublicIds = deletes.length
+                ? await collectPublicIds({ boardId, tileIds: deletes })
+                : [];
+
+            // Every filter is scoped by boardId, so a caller cannot reach a tile on
+            // a board they do not own even by guessing its id.
+            //
+            // The payloads are cast because the model types `style` and `data` as
+            // fully populated while a batch legitimately sets a subset of fields.
+            // zod has already validated the shape by this point.
+            const operations: AnyBulkWriteOperation<ITile>[] = [
+                ...upserts.map(({ _id, ...fields }) => ({
+                    updateOne: {
+                        filter: { _id, boardId },
+                        update: {
+                            $set: fields as unknown as Partial<ITile>,
+                            $setOnInsert: { boardId },
+                        },
+                        upsert: true,
+                    },
+                })),
+                ...patches.map(({ id, changes }) => ({
+                    updateOne: {
+                        filter: { _id: id, boardId },
+                        update: { $set: changes as unknown as Partial<ITile> },
+                    },
+                })),
+                ...deletes.map((id) => ({
+                    deleteOne: { filter: { _id: id, boardId } },
+                })),
+            ] as AnyBulkWriteOperation<ITile>[];
+
+            // Ordered, because a batch may delete and recreate the same id.
+            const result = await Tile.bulkWrite(operations, { ordered: true });
+
+            await destroyPublicIds(orphanedPublicIds);
+
+            // Recompute rather than $inc — upserts may or may not have inserted,
+            // and a drifting counter is what made the dashboard counts wrong.
+            board.tileCount = await Tile.countDocuments({ boardId });
+            await board.save();
+
+            // Re-embed anything whose text changed. Debounced per tile, so a burst
+            // of edits costs one embedding call rather than one per request.
+            const touchedIds = [
+                ...upserts
+                    .filter((tile) => hasEmbeddableText(tile.data))
+                    .map((tile) => tile._id),
+                ...patches
+                    .filter((patch) => hasEmbeddableText(patch.changes.data))
+                    .map((patch) => patch.id),
+            ];
+            if (touchedIds.length) {
+                const touched = await Tile.find({ _id: { $in: touchedIds } });
+                for (const tile of touched) {
+                    debouncedGenerateAndSaveEmbedding(tile);
+                }
+            }
+
+            return res.json({
+                upserted: result.upsertedCount + result.modifiedCount,
+                deleted: result.deletedCount,
+                tileCount: board.tileCount,
+            });
+        } catch (error) {
+            console.error('Failed to apply tile batch:', error);
+            return res
+                .status(500)
+                .json({ message: 'Failed to apply tile batch' });
+        }
     }
-});
+);
 
 // GET /api/boards/:boardId/tiles - Get all tiles for a board
-router.get('/boards/:boardId/tiles', async (req: Request, res: Response) => {
-    try {
-        const { boardId } = req.params;
-        const board = await Board.findById(boardId);
-        if (!board) {
-            return res.status(404).json({ message: 'Board not found' });
+router.get(
+    '/boards/:boardId/tiles',
+    loadBoard(),
+    async (req: Request, res: Response) => {
+        try {
+            const tiles = await Tile.find({ boardId: req.params.boardId });
+            return res.json(tiles);
+        } catch (error) {
+            return res.status(500).json({ message: 'Server error' });
         }
-        if (board.userId.toString() !== req.user?.userId) {
-            return res.status(403).json({ message: 'Access denied' });
-        }
-        const tiles = await Tile.find({ boardId });
-        return res.json(tiles);
-    } catch (error) {
-        return res.status(500).json({ message: 'Server error' });
     }
-});
+);
 
 // GET /api/boards/:boardId/tiles/:id - Get single tile
 router.get(
     '/boards/:boardId/tiles/:id',
+    loadBoard(),
     async (req: Request, res: Response) => {
         try {
             const { boardId, id } = req.params;
-            const board = await Board.findById(boardId);
-            if (!board) {
-                return res.status(404).json({ message: 'Board not found' });
-            }
-            if (board.userId.toString() != req.user?.userId) {
-                return res.status(403).json({ message: 'Access denied' });
-            }
             const tile = await Tile.findOne({ _id: id, boardId });
             if (!tile) {
                 return res.status(404).json({ message: 'Tile not found' });
@@ -283,59 +266,57 @@ router.get(
 );
 
 // POST /api/boards/:boardId/tiles - Create new tile
-router.post('/boards/:boardId/tiles', async (req: Request, res: Response) => {
-    try {
-        const { boardId } = req.params;
-        const { type, position, size, style, data, zIndex } = req.body;
-        const board = await Board.findById(boardId);
-        if (!board) {
-            return res.status(404).json({ message: 'Board not found' });
-        }
-        if (board.userId.toString() !== req.user?.userId) {
-            return res.status(403).json({ message: 'Access denied' });
-        }
-        if (!type || !['text', 'image', 'link'].includes(type)) {
-            return res.status(400).json({ message: 'invalid tile type' });
-        }
-        const tile = new Tile({
-            boardId,
-            type,
-            position,
-            size,
-            style,
-            data,
-            zIndex,
-        });
-        await tile.save();
-
-        // Fire-and-forget embedding generation
-        generateAndSaveEmbedding(tile).catch(() => {});
-
-        // Update board's updatedAt timestamp and increment tile count
-        board.updatedAt = new Date();
-        board.tileCount += 1;
-        await board.save();
-
-        return res.status(201).json(tile);
-    } catch (error) {
-        return res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
-// PATCH /api/tiles/:id - Update tile
-router.patch(
-    '/boards/:boardId/tiles/:id',
+router.post(
+    '/boards/:boardId/tiles',
+    loadBoard(),
     async (req: Request, res: Response) => {
         try {
-            const { id } = req.params;
+            const { boardId } = req.params;
+            const board = req.board!;
+            const { type, position, size, style, data, zIndex } = req.body;
+            if (!type || !['text', 'image', 'link'].includes(type)) {
+                return res.status(400).json({ message: 'invalid tile type' });
+            }
+            const tile = new Tile({
+                boardId,
+                type,
+                position,
+                size,
+                style,
+                data,
+                zIndex,
+            });
+            await tile.save();
 
-            const tile = await Tile.findById(id);
+            // Fire-and-forget embedding generation
+            generateAndSaveEmbedding(tile).catch(() => {});
+
+            // Update board's updatedAt timestamp and increment tile count
+            board.updatedAt = new Date();
+            board.tileCount += 1;
+            await board.save();
+
+            return res.status(201).json(tile);
+        } catch (error) {
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+    }
+);
+
+// PATCH /api/boards/:boardId/tiles/:id - Update a single tile
+router.patch(
+    '/boards/:boardId/tiles/:id',
+    loadBoard(),
+    async (req: Request, res: Response) => {
+        try {
+            const { boardId, id } = req.params;
+            const board = req.board!;
+
+            // Scoped by boardId, so a tile id from another board cannot be
+            // reached even with a valid token for this one.
+            const tile = await Tile.findOne({ _id: id, boardId });
             if (!tile) {
                 return res.status(404).json({ message: 'Tile not found' });
-            }
-            const board = await Board.findById(tile.boardId);
-            if (!board || board.userId.toString() !== req.user?.userId) {
-                return res.status(403).json({ message: 'Access denied' });
             }
 
             // Parsing rather than spreading req.body: only declared fields
@@ -377,19 +358,18 @@ router.patch(
     }
 );
 
-// DELETE /api/tiles/:id - Delete tile
+// DELETE /api/boards/:boardId/tiles/:id - Delete a single tile
 router.delete(
     '/boards/:boardId/tiles/:id',
+    loadBoard(),
     async (req: Request, res: Response) => {
         try {
-            const { id } = req.params;
-            const tile = await Tile.findById(id);
+            const { boardId, id } = req.params;
+            const board = req.board!;
+
+            const tile = await Tile.findOne({ _id: id, boardId });
             if (!tile) {
                 return res.status(404).json({ message: 'tile not found' });
-            }
-            const board = await Board.findById(tile.boardId);
-            if (!board || board.userId.toString() !== req.user?.userId) {
-                return res.status(403).json({ message: 'Access denied' });
             }
             // Delete the associated Cloudinary image if present. Best-effort:
             // a Cloudinary outage must not leave an undeletable tile behind.
