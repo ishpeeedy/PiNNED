@@ -11,6 +11,11 @@ const Board = () => {
     const { id } = useParams<{ id: string }>(); // Get board ID from URL
     const [board, setBoard] = useState<BoardType | null>(null);
     const [tiles, setTiles] = useState<Tile[]>([]);
+    // Mirrors `tiles`, but updated synchronously. Handlers that run several
+    // times in one tick (deleting a multi-selection, committing a group drag)
+    // must see each other's writes; reading `tiles` from the closure would
+    // make every iteration overwrite the previous one.
+    const tilesRef = useRef<Tile[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDeleteMode, setIsDeleteMode] = useState(false);
     const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
@@ -161,9 +166,29 @@ const Board = () => {
     // Undo/Redo history
     const [history, setHistory] = useState<Tile[][]>([]);
     const [historyIndex, setHistoryIndex] = useState(-1);
+    // Same reasoning as `tilesRef` — history must also survive several
+    // mutations landing in a single tick.
+    const historyRef = useRef<Tile[][]>([]);
+    const historyIndexRef = useRef(-1);
     const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
     const [undoRedoKey, setUndoRedoKey] = useState(0);
+
+    // The single entry point for mutating tiles. Applies `updater` to the
+    // synchronously-current array, publishes it to both the ref and React
+    // state, and hands the result back so callers can record history.
+    const commitTiles = useCallback((updater: (prev: Tile[]) => Tile[]) => {
+        const next = updater(tilesRef.current);
+        tilesRef.current = next;
+        setTiles(next);
+        return next;
+    }, []);
+
+    // Replaces tiles wholesale (server loads, undo/redo restores).
+    const replaceTiles = useCallback((next: Tile[]) => {
+        tilesRef.current = next;
+        setTiles(next);
+    }, []);
 
     const handleToggleDelete = () => {
         const newDeleteMode = !isDeleteMode;
@@ -173,19 +198,30 @@ const Board = () => {
         }
     };
 
-    const saveToHistory = (newTiles: Tile[]) => {
-        // Remove any history after current index (for redo branch)
-        const newHistory = history.slice(0, historyIndex + 1);
-        // Add new state
+    const saveToHistory = useCallback((newTiles: Tile[]) => {
+        // Drop any redo branch, then append the new state
+        const newHistory = historyRef.current.slice(
+            0,
+            historyIndexRef.current + 1
+        );
         newHistory.push(JSON.parse(JSON.stringify(newTiles)));
         // Limit history to 50 states
         if (newHistory.length > 50) {
             newHistory.shift();
         } else {
-            setHistoryIndex(historyIndex + 1);
+            historyIndexRef.current = historyIndexRef.current + 1;
         }
+        historyRef.current = newHistory;
+        setHistoryIndex(historyIndexRef.current);
         setHistory(newHistory);
-    };
+    }, []);
+
+    const setHistoryState = useCallback((entries: Tile[][], index: number) => {
+        historyRef.current = entries;
+        historyIndexRef.current = index;
+        setHistory(entries);
+        setHistoryIndex(index);
+    }, []);
 
     const syncTilesToBackend = async (tilesToSync: Tile[]) => {
         if (!id || isSyncing) return;
@@ -218,14 +254,14 @@ const Board = () => {
 
             // Fetch fresh data to get correct IDs and update history
             const freshTiles = await tileAPI.getTiles(id);
-            setTiles(freshTiles);
+            replaceTiles(freshTiles);
 
             // Update the current history entry with fresh IDs
-            setHistory((prev) => {
-                const updated = [...prev];
-                updated[historyIndex] = JSON.parse(JSON.stringify(freshTiles));
-                return updated;
-            });
+            const updated = [...historyRef.current];
+            updated[historyIndexRef.current] = JSON.parse(
+                JSON.stringify(freshTiles)
+            );
+            setHistoryState(updated, historyIndexRef.current);
         } catch (error) {
             console.error('Failed to sync tiles:', error);
             toast.error('Failed to sync changes - try refreshing');
@@ -237,9 +273,11 @@ const Board = () => {
     const handleUndo = useCallback(() => {
         if (historyIndex > 0 && !isSyncing) {
             const newIndex = historyIndex - 1;
-            setHistoryIndex(newIndex);
-            const restoredTiles = JSON.parse(JSON.stringify(history[newIndex]));
-            setTiles(restoredTiles);
+            setHistoryState(historyRef.current, newIndex);
+            const restoredTiles = JSON.parse(
+                JSON.stringify(historyRef.current[newIndex])
+            );
+            replaceTiles(restoredTiles);
             setUndoRedoKey((k) => k + 1);
 
             // Debounced sync to backend
@@ -252,14 +290,22 @@ const Board = () => {
 
             toast.success('Undo');
         }
-    }, [historyIndex, isSyncing, history, syncTilesToBackend]);
+    }, [
+        historyIndex,
+        isSyncing,
+        syncTilesToBackend,
+        replaceTiles,
+        setHistoryState,
+    ]);
 
     const handleRedo = useCallback(() => {
         if (historyIndex < history.length - 1 && !isSyncing) {
             const newIndex = historyIndex + 1;
-            setHistoryIndex(newIndex);
-            const restoredTiles = JSON.parse(JSON.stringify(history[newIndex]));
-            setTiles(restoredTiles);
+            setHistoryState(historyRef.current, newIndex);
+            const restoredTiles = JSON.parse(
+                JSON.stringify(historyRef.current[newIndex])
+            );
+            replaceTiles(restoredTiles);
             setUndoRedoKey((k) => k + 1);
 
             // Debounced sync to backend
@@ -272,7 +318,14 @@ const Board = () => {
 
             toast.success('Redo');
         }
-    }, [historyIndex, history, isSyncing, syncTilesToBackend]);
+    }, [
+        historyIndex,
+        history,
+        isSyncing,
+        syncTilesToBackend,
+        replaceTiles,
+        setHistoryState,
+    ]);
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -398,7 +451,7 @@ const Board = () => {
             }
 
             if (!cancelled && mergedUpdates.size > 0) {
-                setTiles((prev) =>
+                commitTiles((prev) =>
                     prev.map((tile) => {
                         const updatedData = mergedUpdates.get(tile._id);
                         if (!updatedData) return tile;
@@ -425,10 +478,9 @@ const Board = () => {
                 ]);
 
                 setBoard(boardData);
-                setTiles(tilesData);
+                replaceTiles(tilesData);
                 // Initialize history
-                setHistory([JSON.parse(JSON.stringify(tilesData))]);
-                setHistoryIndex(0);
+                setHistoryState([JSON.parse(JSON.stringify(tilesData))], 0);
 
                 setLoading(false);
 
@@ -447,7 +499,7 @@ const Board = () => {
         return () => {
             cancelled = true;
         };
-    }, [id]);
+    }, [id, commitTiles, replaceTiles, setHistoryState]);
 
     if (loading) {
         return (
@@ -500,8 +552,7 @@ const Board = () => {
                 data: {},
             });
 
-            const newTiles = [...tiles, newTile];
-            setTiles(newTiles);
+            const newTiles = commitTiles((prev) => [...prev, newTile]);
             saveToHistory(newTiles);
             toast.success(`${type} tile created`);
         } catch (error) {
@@ -514,10 +565,11 @@ const Board = () => {
         if (!id) return;
 
         // Optimistic update - update UI immediately
-        const optimisticTiles = tiles.map((tile) =>
-            tile._id === tileId ? { ...tile, ...updates } : tile
+        const optimisticTiles = commitTiles((prev) =>
+            prev.map((tile) =>
+                tile._id === tileId ? { ...tile, ...updates } : tile
+            )
         );
-        setTiles(optimisticTiles);
         saveToHistory(optimisticTiles);
 
         // Then sync with backend
@@ -526,8 +578,8 @@ const Board = () => {
         } catch (error) {
             console.error('Failed to update tile:', error);
             toast.error('Failed to update tile');
-            // Revert on error
-            setTiles(tiles);
+            // The client is the only writer, so the optimistic state stands.
+            // Reverting here would discard unrelated edits made since.
         }
     };
 
@@ -536,8 +588,9 @@ const Board = () => {
 
         try {
             await tileAPI.deleteTile(id, tileId);
-            const newTiles = tiles.filter((tile) => tile._id !== tileId);
-            setTiles(newTiles);
+            const newTiles = commitTiles((prev) =>
+                prev.filter((tile) => tile._id !== tileId)
+            );
             saveToHistory(newTiles);
             toast.success('Tile deleted');
             // Clear selection if deleted tile was selected
@@ -579,13 +632,13 @@ const Board = () => {
 
     const handleBringToFront = () => {
         if (!selectedTileId) return;
-        const maxZ = Math.max(...tiles.map((t) => t.zIndex ?? 1), 0);
+        const maxZ = Math.max(...tilesRef.current.map((t) => t.zIndex ?? 1), 0);
         handleTileUpdate(selectedTileId, { zIndex: maxZ + 1 });
     };
 
     const handleSendToBack = () => {
         if (!selectedTileId) return;
-        const minZ = Math.min(...tiles.map((t) => t.zIndex ?? 1), 0);
+        const minZ = Math.min(...tilesRef.current.map((t) => t.zIndex ?? 1), 0);
         handleTileUpdate(selectedTileId, { zIndex: minZ - 1 });
     };
 
@@ -608,7 +661,7 @@ const Board = () => {
         try {
             const cloned: Tile[] = [];
             for (const tid of idsToClone) {
-                const src = tiles.find((t) => t._id === tid);
+                const src = tilesRef.current.find((t) => t._id === tid);
                 if (!src) continue;
                 const newTile = await tileAPI.createTile(id, {
                     type: src.type,
@@ -622,8 +675,7 @@ const Board = () => {
                 });
                 cloned.push(newTile);
             }
-            const newTiles = [...tiles, ...cloned];
-            setTiles(newTiles);
+            const newTiles = commitTiles((prev) => [...prev, ...cloned]);
             saveToHistory(newTiles);
             toast.success(
                 `Duplicated ${cloned.length} tile${cloned.length > 1 ? 's' : ''}`
@@ -635,12 +687,12 @@ const Board = () => {
     };
 
     const handleContextMenuBringToFront = (tileId: string) => {
-        const maxZ = Math.max(...tiles.map((t) => t.zIndex ?? 1), 0);
+        const maxZ = Math.max(...tilesRef.current.map((t) => t.zIndex ?? 1), 0);
         handleTileUpdate(tileId, { zIndex: maxZ + 1 });
     };
 
     const handleContextMenuSendToBack = (tileId: string) => {
-        const minZ = Math.min(...tiles.map((t) => t.zIndex ?? 1), 0);
+        const minZ = Math.min(...tilesRef.current.map((t) => t.zIndex ?? 1), 0);
         handleTileUpdate(tileId, { zIndex: minZ - 1 });
     };
 
@@ -648,14 +700,14 @@ const Board = () => {
         setLastUsedColor(color);
         handleTileUpdate(tileId, {
             style: {
-                ...tiles.find((t) => t._id === tileId)?.style,
+                ...tilesRef.current.find((t) => t._id === tileId)?.style,
                 backgroundColor: color,
             },
         });
     };
 
     const handleSelectAll = () => {
-        setSelectedTileIds(new Set(tiles.map((t) => t._id)));
+        setSelectedTileIds(new Set(tilesRef.current.map((t) => t._id)));
         if (tiles.length > 0) setSelectedTileId(tiles[0]._id);
     };
 
@@ -685,8 +737,7 @@ const Board = () => {
                 },
                 data: {},
             });
-            const newTiles = [...tiles, newTile];
-            setTiles(newTiles);
+            const newTiles = commitTiles((prev) => [...prev, newTile]);
             saveToHistory(newTiles);
             toast.success(`${type} tile created`);
         } catch (error) {
@@ -707,7 +758,7 @@ const Board = () => {
         // Update the selected tile's background color
         handleTileUpdate(selectedTileId, {
             style: {
-                ...tiles.find((t) => t._id === selectedTileId)?.style,
+                ...tilesRef.current.find((t) => t._id === selectedTileId)?.style,
                 backgroundColor: color,
             },
         });
@@ -762,8 +813,7 @@ const Board = () => {
                 },
             });
 
-            const newTiles = [...tiles, newTile];
-            setTiles(newTiles);
+            const newTiles = commitTiles((prev) => [...prev, newTile]);
             saveToHistory(newTiles);
             toast.success('Image tile created');
         } catch (error) {
