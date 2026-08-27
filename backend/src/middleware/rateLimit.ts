@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import type { Request } from 'express';
 
 /**
@@ -16,9 +16,17 @@ const RATE_LIMITED = {
     message: 'Too many requests, please slow down',
 };
 
-/** Keyed by user when authenticated, so one bad network cannot lock out a shared IP. */
+/**
+ * Keyed by user when authenticated, so one bad network cannot lock out a
+ * shared IP.
+ *
+ * The IP fallback goes through ipKeyGenerator, which buckets IPv6 by subnet
+ * rather than by exact address. A single IPv6 client is routinely handed a
+ * whole /64, so keying on the full address would let it sidestep the limit by
+ * varying the low bits.
+ */
 function keyByUserOrIp(req: Request): string {
-    return req.user?.userId ?? req.ip ?? 'unknown';
+    return req.user?.userId ?? ipKeyGenerator(req.ip ?? 'unknown');
 }
 
 /**
