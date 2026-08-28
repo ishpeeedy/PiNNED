@@ -6,6 +6,14 @@ import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Toolbar from '@/components/Toolbar';
 import Canvas from '@/components/Canvas';
+import {
+    IDENTITY_VIEWPORT,
+    ZOOM_STEP,
+    centerOn,
+    rectCenter,
+    zoomAtCenter,
+    type Viewport,
+} from '@/lib/viewport';
 
 const Board = () => {
     const { id } = useParams<{ id: string }>(); // Get board ID from URL
@@ -23,7 +31,10 @@ const Board = () => {
         new Set()
     );
     const [lastUsedColor, setLastUsedColor] = useState<string | null>(null);
-    const [zoom, setZoom] = useState(1);
+    // Pan and zoom are one value: anchoring a zoom on the cursor changes both
+    // together, so splitting them across two components made that impossible.
+    const [viewport, setViewport] = useState<Viewport>(IDENTITY_VIEWPORT);
+    const zoom = viewport.zoom;
 
     // Search state
     const [searchQuery, setSearchQuery] = useState('');
@@ -92,16 +103,13 @@ const Board = () => {
             const container = canvasContainerRef.current;
             if (!container) return;
             const rect = container.getBoundingClientRect();
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const tileCenterX = (tile.position.x + tile.size.width / 2) * zoom;
-            const tileCenterY = (tile.position.y + tile.size.height / 2) * zoom;
+            const pan = centerOn(
+                rectCenter(tile.position, tile.size),
+                { width: rect.width, height: rect.height },
+                zoom
+            );
             panVersionRef.current += 1;
-            setTargetPan({
-                x: centerX - tileCenterX,
-                y: centerY - tileCenterY,
-                version: panVersionRef.current,
-            });
+            setTargetPan({ ...pan, version: panVersionRef.current });
             setSelectedTileId(tile._id);
         },
         [zoom]
@@ -158,10 +166,23 @@ const Board = () => {
         }
     };
 
-    const handleZoomIn = () =>
-        setZoom((z) => Math.min(2, parseFloat((z + 0.25).toFixed(2))));
-    const handleZoomOut = () =>
-        setZoom((z) => Math.max(0.25, parseFloat((z - 0.25).toFixed(2))));
+    // The toolbar buttons anchor on the middle of the canvas, so whatever you
+    // are looking at stays put. The wheel anchors on the cursor instead — same
+    // maths, different anchor.
+    const stepZoom = useCallback((direction: 1 | -1) => {
+        const container = canvasContainerRef.current;
+        const rect = container?.getBoundingClientRect();
+        const size = {
+            width: rect?.width ?? 0,
+            height: rect?.height ?? 0,
+        };
+        setViewport((current) =>
+            zoomAtCenter(current, current.zoom + direction * ZOOM_STEP, size)
+        );
+    }, []);
+
+    const handleZoomIn = () => stepZoom(1);
+    const handleZoomOut = () => stepZoom(-1);
 
     // Undo/Redo history
     const [history, setHistory] = useState<Tile[][]>([]);
@@ -375,8 +396,7 @@ const Board = () => {
                     tile.type === 'link' &&
                     !!tile.data?.linkUrl &&
                     tile.data.linkUrl.startsWith('http') &&
-                    (!tile.data?.thumbnailUrl ||
-                        !tile.data?.linkTitle)
+                    (!tile.data?.thumbnailUrl || !tile.data?.linkTitle)
             );
 
             if (linkTilesNeedingMetadata.length === 0) return;
@@ -717,7 +737,14 @@ const Board = () => {
     };
 
     const handleResetZoom = () => {
-        setZoom(1);
+        const container = canvasContainerRef.current;
+        const rect = container?.getBoundingClientRect();
+        setViewport((current) =>
+            zoomAtCenter(current, 1, {
+                width: rect?.width ?? 0,
+                height: rect?.height ?? 0,
+            })
+        );
     };
 
     const handleCreateTileAtPosition = async (
@@ -758,7 +785,8 @@ const Board = () => {
         // Update the selected tile's background color
         handleTileUpdate(selectedTileId, {
             style: {
-                ...tilesRef.current.find((t) => t._id === selectedTileId)?.style,
+                ...tilesRef.current.find((t) => t._id === selectedTileId)
+                    ?.style,
                 backgroundColor: color,
             },
         });
@@ -857,6 +885,8 @@ const Board = () => {
                     onCanvasClick={handleCanvasClick}
                     selectedTileIds={selectedTileIds}
                     zoom={zoom}
+                    viewport={viewport}
+                    onViewportChange={setViewport}
                     background={board?.settings?.background}
                     searchMatchIds={searchMatchIds}
                     focusedSearchId={focusedSearchTile?._id ?? null}

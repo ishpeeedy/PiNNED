@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Rnd } from 'react-rnd';
 import type { Tile, BoardBackground } from '@/types';
+import { screenToWorld, zoomAt, type Viewport } from '@/lib/viewport';
 import TextTile from './tiles/TextTile';
 import LinkTile from './tiles/LinkTile';
 import ImageTile from './tiles/ImageTile';
@@ -54,6 +55,8 @@ interface CanvasProps {
         position: { x: number; y: number }
     ) => void;
     zoom?: number;
+    viewport: Viewport;
+    onViewportChange?: (viewport: Viewport) => void;
     background?: BoardBackground;
     onTileClick?: (tileId: string, ctrlKey: boolean) => void;
     onCanvasClick?: () => void;
@@ -91,6 +94,8 @@ const Canvas = ({
     onDeleteTile,
     onCreateTileFromDrop,
     zoom = 1,
+    viewport,
+    onViewportChange,
     background,
     onTileClick,
     onCanvasClick,
@@ -119,8 +124,11 @@ const Canvas = ({
 }: CanvasProps) => {
     const canvasRef = useRef<HTMLDivElement>(null);
     const panContainerRef = useRef<HTMLDivElement>(null);
-    const [pan, setPan] = useState({ x: 0, y: 0 });
-    const panRef = useRef({ x: 0, y: 0 });
+    const pan = viewport.pan;
+    // Mirrors viewport.pan, but written synchronously during a pan drag so the
+    // transform can be applied without a React render on every mouse move.
+    const panRef = useRef(viewport.pan);
+    const viewportRef = useRef(viewport);
     const isPanningRef = useRef(false);
     const dragStartRef = useRef({ x: 0, y: 0 });
     const [isDragOver, setIsDragOver] = useState(false);
@@ -359,24 +367,52 @@ const Canvas = ({
             if (!isPanningRef.current) return;
             isPanningRef.current = false;
             canvas.style.cursor = '';
-            // Commit to React state once so drop calculations etc. see the right value
-            setPan({ ...panRef.current });
+            // Commit once, at the end of the gesture, so drop calculations and
+            // everything else see the settled value.
+            onViewportChange?.({
+                ...viewportRef.current,
+                pan: { ...panRef.current },
+            });
+        };
+
+        // Wheel zoom, anchored on the cursor: the point under the pointer stays
+        // under the pointer. Exponential so the step feels even at every scale.
+        const onWheel = (e: WheelEvent) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const anchor = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top,
+            };
+            const current = viewportRef.current;
+            const next = zoomAt(
+                current,
+                current.zoom * Math.exp(-e.deltaY * 0.0015),
+                anchor
+            );
+            if (next.zoom === current.zoom) return;
+            panRef.current = next.pan;
+            onViewportChange?.(next);
         };
 
         canvas.addEventListener('mousedown', onMouseDown);
+        // Not passive — zooming must stop the page from scrolling.
+        canvas.addEventListener('wheel', onWheel, { passive: false });
         window.addEventListener('mousemove', onMouseMove);
         window.addEventListener('mouseup', onMouseUp);
         return () => {
             canvas.removeEventListener('mousedown', onMouseDown);
+            canvas.removeEventListener('wheel', onWheel);
             window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);
         };
-    }, [applyPanTransform]);
+    }, [applyPanTransform, onViewportChange]);
 
-    // Keep ref in sync when React state changes (e.g. initial render)
+    // Keep the refs in step with props, except mid-pan where the ref leads.
     useEffect(() => {
-        panRef.current = pan;
-    }, [pan]);
+        viewportRef.current = viewport;
+        if (!isPanningRef.current) panRef.current = viewport.pan;
+    }, [viewport]);
 
     // Jump to search result when targetPan changes — smooth animated pan
     useEffect(() => {
@@ -395,11 +431,11 @@ const Canvas = ({
         const timer = setTimeout(() => {
             container.style.transition = '';
             panRef.current = { x, y };
-            setPan({ x, y });
+            onViewportChange?.({ ...viewportRef.current, pan: { x, y } });
         }, 420);
 
         return () => clearTimeout(timer);
-    }, [targetPan, applyPanTransform]);
+    }, [targetPan, applyPanTransform, onViewportChange]);
 
     // Handle drag and drop
     const handleDragOver = (e: React.DragEvent) => {
@@ -428,10 +464,11 @@ const Canvas = ({
         const rect = canvasRef.current?.getBoundingClientRect();
         if (!rect) return;
 
-        const x = (e.clientX - rect.left - pan.x) / zoom;
-        const y = (e.clientY - rect.top - pan.y) / zoom;
-
-        const position = { x: Math.round(x), y: Math.round(y) };
+        const world = screenToWorld(
+            { x: e.clientX - rect.left, y: e.clientY - rect.top },
+            viewportRef.current
+        );
+        const position = { x: Math.round(world.x), y: Math.round(world.y) };
 
         // Handle file drops (from file explorer)
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -530,15 +567,16 @@ const Canvas = ({
                     onContextMenu={(e) => {
                         if (!canvasRef.current) return;
                         const rect = canvasRef.current.getBoundingClientRect();
+                        const world = screenToWorld(
+                            {
+                                x: e.clientX - rect.left,
+                                y: e.clientY - rect.top,
+                            },
+                            viewportRef.current
+                        );
                         contextMenuCanvasPosRef.current = {
-                            x: Math.round(
-                                (e.clientX - rect.left - panRef.current.x) /
-                                    zoomRef.current
-                            ),
-                            y: Math.round(
-                                (e.clientY - rect.top - panRef.current.y) /
-                                    zoomRef.current
-                            ),
+                            x: Math.round(world.x),
+                            y: Math.round(world.y),
                         };
                     }}
                     onDragOver={handleDragOver}
