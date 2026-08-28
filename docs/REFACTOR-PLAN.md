@@ -117,7 +117,7 @@ The step that needs your eyes. Left until state is clean and tested.
 
 ## Stage 6 — Interactions
 
-- [ ] **6.1** Cursor-anchored wheel zoom; viewport-centre button zoom
+- [x] **6.1** Cursor-anchored wheel zoom; viewport-centre button zoom
 - [ ] **6.2** Lasso / marquee selection
 - [ ] **6.3** Keyboard: Delete, Escape, arrow-key nudge, Ctrl+A
 - [ ] **6.4** Remove delete mode
@@ -132,7 +132,7 @@ The step that needs your eyes. Left until state is clean and tested.
 - [x] **7.4** Rate limiting (upload, auth, metadata)
 - [x] **7.5** SSRF guard on `/api/metadata`
 - [ ] **7.6** Drop redundant `board.save()` on every tile write
-- [ ] **7.7** Fix `tileCount` drift
+- [~] **7.7** Fix `tileCount` drift — correct in the batch endpoint; single-tile create/delete still uses ±1
 
 ## Parked
 
